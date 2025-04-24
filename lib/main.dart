@@ -1,24 +1,27 @@
 import 'package:flutter/material.dart';
-import 'package:wakelock/wakelock.dart';
+import 'package:flutter/services.dart';
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+import 'splash.dart'; // Import your splash screen
+import 'home_page.dart'; // If your HomePage is in a separate file
 
-  @override
-  State<HomePage> createState() => _HomePageState();
-}
+const double kDefaultFontSize = 14.0;
 
-class _HomePageState extends State<HomePage> {
-  @override
-  void initState() {
-    super.initState();
-    Wakelock.enable(); // Keeps the screen awake
-  }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(child: Text('Home Page')),
-    );
-  }
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized(); // Ensure Flutter is initialized
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.landscapeLeft,
+    DeviceOrientation.landscapeRight,
+  ]);
+
+  // Other system settings...s
+
+  // Run app with routes
+  runApp(MaterialApp(
+    initialRoute: '/', // Start at splash screen
+    routes: {
+      '/': (context) => const SplashPage(), // Splash screen as initial route
+      '/home': (context) => const HomePage(), // Route to HomePage
+    },
+  ));
 }
