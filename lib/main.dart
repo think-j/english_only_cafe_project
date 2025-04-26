@@ -1,27 +1,42 @@
 import 'package:flutter/material.dart';
+/*import 'first_page.dart';
+import 'second_page.dart';*/
+import 'third_page.dart';
+import 'forth_page.dart';
+
 import 'package:flutter/services.dart';
-
-import 'splash.dart'; // Import your splash screen
-import 'home_page.dart'; // If your HomePage is in a separate file
-
-const double kDefaultFontSize = 14.0;
-
-
+import 'package:flutter/rendering.dart';
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized(); // Ensure Flutter is initialized
+  debugPaintSizeEnabled = false;
+  WidgetsFlutterBinding.ensureInitialized();
   await SystemChrome.setPreferredOrientations([
+
     DeviceOrientation.landscapeLeft,
     DeviceOrientation.landscapeRight,
   ]);
+  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
+  // ... other main() configurations ...
 
-  // Other system settings...s
-
-  // Run app with routes
-  runApp(MaterialApp(
-    initialRoute: '/', // Start at splash screen
-    routes: {
-      '/': (context) => const SplashPage(), // Splash screen as initial route
-      '/home': (context) => const HomePage(), // Route to HomePage
-    },
+  runApp(const MaterialApp(
+    home: OrderedPageView(),
   ));
+}
+
+class OrderedPageView extends StatelessWidget {
+  const OrderedPageView({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return  Scaffold(
+      resizeToAvoidBottomInset: false,
+      body: PageView(
+        scrollDirection: Axis.vertical,
+        children: [
+
+          ThirdPage(),
+          ForthPage(), // Include ForthPage here
+        ],
+      ),
+    );
+  }
 }
