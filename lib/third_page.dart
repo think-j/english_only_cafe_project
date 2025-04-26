@@ -122,44 +122,32 @@ class _ThirdPageState extends State<ThirdPage> {
     // Get screen size
     final screenSize = MediaQuery.of(context).size;
 
-    return Scaffold(
-        resizeToAvoidBottomInset: false,
-      backgroundColor: Colors.white,
-      body: SafeArea(
+    return SafeArea(
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
 
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              SizedBox(height: 13),
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final cardWidth = screenSize.width * 0.7;
-                  final cardHeight = screenSize.height * 1;
+          children: [
+            SizedBox(height: 13),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final cardWidth = screenSize.width * 0.7;
+                final cardHeight = screenSize.height * 1;
 
-                  return Container(
-                    width: cardWidth,
-                    height: cardHeight,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                    ),
-                    child: _buildLandscapeGrid(cardWidth), // Always use landscape layout
-                  );
-                },
-              ),
-              Padding(
-                padding: const EdgeInsets.only(top: 8.0),
-                child: Column(
-                  children: [
-                    Icon(Icons.keyboard_arrow_up, size: 24, color: Colors.grey),
-                    Text('Swipe up to view home', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                  ],
-                ),
-              ),
-            ],
-          ),
+                return Container(
+                  width: cardWidth,
+                  height: cardHeight * 0.95,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                  ),
+                  child: _buildLandscapeGrid(cardWidth), // Always use landscape layout
+                );
+              },
+            ),
+
+          ],
         ),
-      )
+      ),
     );
 
   }
@@ -186,76 +174,69 @@ class _ThirdPageState extends State<ThirdPage> {
     bool isFreeReward = index == 7 || index == 14; // 8th and 15th spots
 
     return Container(
-      margin: const EdgeInsets.all(0),
+      margin: const EdgeInsets.only(),
       decoration: BoxDecoration(
         border: Border.all(color: Colors.black, width: 0.5),
         color: isFreeReward ? Colors.grey[300] : Colors.white,
       ),
-      child: OverflowBox(
-        maxWidth: double.infinity,
-        maxHeight: double.infinity,
-        child: Stack(
-          children: [
-            if (isFilled)
-              Center(
-                child: isFreeReward
-                    ? const Text('STAMPED\nREWARD',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontWeight: FontWeight.bold))
-                    : const Icon(Icons.eco, size: 40, color: Colors.grey),
-              ),
-            if (!isFilled && isFreeReward)
-              Positioned(
-                bottom: 70,  // Position at the bottom
-                left: 0,    // Start from the left edge
-                right: -80,   // Extend to the right edge
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 16.0),
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Padding(
-                      padding: const EdgeInsets.all(4.0),
-                      child: index == 7
-                          ? const Text('FREE\nREFILL',
-                          textAlign: TextAlign.end,
-                          style: TextStyle(fontWeight: FontWeight.bold))
-                          : const Text('FREE\nDRINK',
-                          textAlign: TextAlign.end,
-                          style: TextStyle(fontWeight: FontWeight.bold)),
-                    ),
-                  ),
-                ),
-              ),
+      child: Stack(
+        children: [
+          if (isFilled)
+            Center(
+              child: isFreeReward
+                  ? const Text('STAMPED\nREWARD',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontWeight: FontWeight.bold))
+                  : const Icon(Icons.eco, size: 40, color: Colors.grey),
+            ),
+          if (!isFilled && isFreeReward)
             Positioned(
-              bottom: 4.0,
-              right: 4.0,
-              child: Text(
-                '${index + 1}',
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
+              bottom: 70,  // Position at the bottom
+              left: 0,    // Start from the left edge
+              right: -80,   // Extend to the right edge
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 16.0),  // Add some padding from the bottom
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Padding(
+                    padding: const EdgeInsets.all(4.0),
+                    child: index == 7
+                        ? const Text('FREE\nREFILL',
+                        textAlign: TextAlign.end,
+                        style: TextStyle(fontWeight: FontWeight.bold))
+                        : const Text('FREE\nDRINK',
+                        textAlign: TextAlign.end,
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
                 ),
               ),
             ),
-            if (index == 0 && isFilled)
-              Positioned(
-                top: 0,
-                right: 0,
-                child: SizedBox(
-                  width: cardWidth / 6 * 0.6,
-                  height: cardWidth / 6 * 0.7,
-                  child: const FittedBox(
-                    fit: BoxFit.contain,
-                    child: Icon(Icons.eco, color: Colors.grey),
-                  ),
+          Positioned(  // Change Align to Positioned for consistent positioning
+            bottom: 4.0,
+            right: 4.0,
+            child: Text(
+              '${index + 1}',
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          if (index == 0 && isFilled)
+            Positioned(
+              top: 0,
+              right: 0,
+              child: SizedBox(
+                width: cardWidth / 6 * 0.6,
+                height: cardWidth / 6 * 0.7,
+                child: const FittedBox(
+                  fit: BoxFit.contain,
+                  child: Icon(Icons.eco, color: Colors.grey),
                 ),
               ),
-          ],
-        ),
+            ),
+        ],
       ),
     );
   }
-
-
-
-  }
+}

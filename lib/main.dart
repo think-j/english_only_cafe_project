@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-/*import 'first_page.dart';
-import 'second_page.dart';*/
+// import 'first_page.dart';
+import 'second_page.dart';
 import 'third_page.dart';
 import 'forth_page.dart';
 
@@ -28,11 +28,12 @@ class OrderedPageView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return  Scaffold(
+      backgroundColor: Colors.white,
       resizeToAvoidBottomInset: false,
       body: PageView(
         scrollDirection: Axis.vertical,
         children: [
-
+          SecondPage(),
           ThirdPage(),
           ForthPage(), // Include ForthPage here
         ],
