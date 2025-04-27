@@ -187,7 +187,7 @@ class _ThirdPageState extends State<ThirdPage> {
                   ? const Text('STAMPED\nREWARD',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontWeight: FontWeight.bold))
-                  : const Icon(Icons.eco, size: 40, color: Colors.grey),
+                  : Image.asset('assets/Maple_leaf_grey.png'),
             ),
           if (!isFilled && isFreeReward)
             Positioned(
@@ -222,7 +222,7 @@ class _ThirdPageState extends State<ThirdPage> {
               ),
             ),
           ),
-          if (index == 0 && isFilled)
+          if (index == 1 && isFilled)
             Positioned(
               top: 0,
               right: 0,

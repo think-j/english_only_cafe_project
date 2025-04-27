@@ -1,5 +1,6 @@
+import 'package:english_only_cafe_project/first_page.dart';
 import 'package:flutter/material.dart';
-// import 'first_page.dart';
+import 'first_page.dart';
 import 'second_page.dart';
 import 'third_page.dart';
 import 'forth_page.dart';
@@ -33,6 +34,7 @@ class OrderedPageView extends StatelessWidget {
       body: PageView(
         scrollDirection: Axis.vertical,
         children: [
+          FirstPage(),
           SecondPage(),
           ThirdPage(),
           ForthPage(), // Include ForthPage here
