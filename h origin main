@@ -1,0 +1,16 @@
+[33maf17439[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m HEAD@{0}: commit (amend): publish app 1.0.0
+[33m7e41e8a[m HEAD@{1}: commit (amend): publish app 1.0.0
+[33md1a7eca[m HEAD@{2}: commit: publish app 1.0.0
+[33md22aa72[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{3}: commit: before erase splash dart
+[33md986b56[m HEAD@{4}: commit: don' do git abort it will screw you
+[33m866deea[m HEAD@{5}: commit: don' do git abort it will screw you
+[33mcb106f3[m HEAD@{6}: reset: moving to 891f9e8~1
+[33mcfae662[m HEAD@{7}: reset: moving to cfae662bc6df697434b19e04de803601b49aba15
+[33mcfae662[m HEAD@{8}: commit: Save my current changes
+[33m891f9e8[m HEAD@{9}: commit: Gestuer detector > PageView
+[33mcb106f3[m HEAD@{10}: commit: before change add Stamp.dart into homepagedart
+[33mc9d3769[m HEAD@{11}: commit: before change add Stamp.dart into homepagedart
+[33m08351b1[m HEAD@{12}: commit: Your commit message here
+[33m1c8a25e[m HEAD@{13}: Branch: renamed refs/heads/main to refs/heads/main
+[33m1c8a25e[m HEAD@{15}: commit: first commit
+[33m17ce65c[m HEAD@{16}: commit (initial): Initial commit
