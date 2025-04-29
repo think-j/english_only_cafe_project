@@ -1,3 +1,4 @@
+import 'package:english_only_cafe_project/fourth_second_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
@@ -5,6 +6,7 @@ import 'dart:convert';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/rendering.dart';
+import 'fourth_first_page.dart';
 double _buttonOpacity = 1.0;
 const double kDefaultFontSize = 14.0;
 
@@ -16,6 +18,17 @@ class ForthPage extends StatefulWidget {
 }
 
 class _ForthPageState extends State<ForthPage> {
+  // --- State variables for infinite PageView ---
+
+  late PageController _pageController;
+
+  late final List<Widget> _actualPages;
+
+  late final int _actualPageCount;
+
+  final int _virtualPageCount = 10000; // Large number for "infinite" scrolling
+
+  // --- End PageView state variables ---
   @override
   void initState() {
     debugPaintSizeEnabled = false;
@@ -30,10 +43,38 @@ class _ForthPageState extends State<ForthPage> {
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
     ]);
+    _actualPages = [
+
+              // Your existing HomePage widget
+
+      const LinkQrGenerator(), // Your second page widget
+
+      const FourthMedia(),     // Your third page widget
+      const HomePage(),
+      // Add more widgets here if needed
+
+    ];
+
+    _actualPageCount = _actualPages.length; // Calculate the real number of pages
+
+
+
+    // Initialize the PageController starting near the middle of the virtual count
+
+    _pageController = PageController(
+
+      initialPage: _virtualPageCount ~/ 2,
+
+    );
   }
+
 
   @override
   void dispose() {
+
+    _pageController.dispose(); // Dispose the PageController
+
+     WakelockPlus(); // Consider disabling wakelock here if appropriate for your app lifecycle
     super.dispose();
   }
 
@@ -57,7 +98,29 @@ class _ForthPageState extends State<ForthPage> {
       body: Column(
         children: [
           Expanded(
-            child: HomePage(),
+            child: PageView.builder(
+
+              controller: _pageController,          // Assign the controller
+
+              scrollDirection: Axis.horizontal,     // Keep horizontal scrolling
+
+              physics: const BouncingScrollPhysics(), // Keep the physics
+
+              itemCount: _virtualPageCount,         // Use the large virtual count
+
+              itemBuilder: (context, index) {
+
+                // Calculate the actual page index using modulo
+
+                final actualIndex = index % _actualPageCount;
+
+                // Return the corresponding page from your list
+
+                return _actualPages[actualIndex];
+
+              },
+
+            ),
           ),
         ],
       ),
