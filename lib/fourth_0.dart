@@ -1,4 +1,4 @@
-import 'package:english_only_cafe_project/fourth_second_page.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
@@ -6,18 +6,20 @@ import 'dart:convert';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/rendering.dart';
-import 'fourth_first_page.dart';
+import 'fourth_1.dart';
+import 'fourth_2.dart';
+
 double _buttonOpacity = 1.0;
 const double kDefaultFontSize = 14.0;
 
-class ForthPage extends StatefulWidget {
-  const ForthPage({Key? key}) : super(key: key);
+class FourthPage extends StatefulWidget {
+  const FourthPage({Key? key}) : super(key: key);
 
   @override
-  State<ForthPage> createState() => _ForthPageState();
+  State<FourthPage> createState() => _FourthPageState();
 }
 
-class _ForthPageState extends State<ForthPage> {
+class _FourthPageState extends State<FourthPage> {
   // --- State variables for infinite PageView ---
 
   late PageController _pageController;
@@ -45,7 +47,7 @@ class _ForthPageState extends State<ForthPage> {
     ]);
     _actualPages = [
 
-              // Your existing HomePage widget
+      // Your existing HomePage widget
 
       const LinkQrGenerator(), // Your second page widget
 
@@ -74,7 +76,7 @@ class _ForthPageState extends State<ForthPage> {
 
     _pageController.dispose(); // Dispose the PageController
 
-     WakelockPlus(); // Consider disabling wakelock here if appropriate for your app lifecycle
+    WakelockPlus(); // Consider disabling wakelock here if appropriate for your app lifecycle
     super.dispose();
   }
 

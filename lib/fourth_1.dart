@@ -214,8 +214,6 @@ class _LinkQrGeneratorState extends State<LinkQrGenerator> {
         title: Text(_pageTitle),
         centerTitle: true,
         backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0.5,
       ),
       body: Padding(
         padding: EdgeInsets.symmetric(vertical: 0), // Removed vertical padding here, adjust if needed
@@ -228,7 +226,7 @@ class _LinkQrGeneratorState extends State<LinkQrGenerator> {
 
             // --- Horizontal Link List Container ---
             SizedBox(
-              height: finalItemHeight * 0.85, // Use calculated height
+              height: finalItemHeight * 0.8, // Use calculated height
               child: _isLoading // Show indicator while loading
                   ? const Center(child: CircularProgressIndicator())
                   : listViewItemCount == 1 // Only show "Add" button if list empty and not loading
@@ -270,7 +268,7 @@ class _LinkQrGeneratorState extends State<LinkQrGenerator> {
         decoration: BoxDecoration(
           color: Colors.grey[50], // Slightly off-white background
           border: Border.all(
-            color: Colors.grey.shade400, // Lighter border
+            color: Colors.grey.shade300, // Lighter border
             width: 1.5,
           ),
           borderRadius: BorderRadius.circular(8), // Consistent rounding
@@ -279,7 +277,7 @@ class _LinkQrGeneratorState extends State<LinkQrGenerator> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: const [
             Icon(
-              Icons.add_circle_outline_rounded,
+              Icons.qr_code,
               size: 40,
               color: Colors.grey,
             ),

@@ -1,9 +1,8 @@
-import 'package:english_only_cafe_project/first_page.dart';
 import 'package:flutter/material.dart';
-import 'first_page.dart';
-import 'second_page.dart';
-import 'third_page.dart';
-import 'forth_page.dart';
+import 'first_0.dart';
+import 'second_0.dart';
+import 'third_0.dart';
+import 'fourth_0.dart';
 
 import 'package:flutter/services.dart';
 import 'package:flutter/rendering.dart';
@@ -69,7 +68,7 @@ class _OrderedPageViewState extends State<OrderedPageView> {
             case 2:
               return const ThirdPage();
             case 3:
-              return const ForthPage();
+              return const FourthPage();
             default:
               return const SizedBox(); // Should never reach here
           }
