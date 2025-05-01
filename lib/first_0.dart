@@ -73,40 +73,40 @@ class _FirstPageState extends State<FirstPage> {
 
                   SizedBox(height: spacingUnit * 2.5),
                   // "ENGLISH ONLY CAFE" text
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'ENGLISH ',
+                  // "ENGLISH ONLY CAFE" text with RichText for better alignment
+                  Center(
+                    child: RichText(
+                      textAlign: TextAlign.center,
+                      text: TextSpan(
                         style: TextStyle(
                           fontFamily: 'SF Pro Display',
                           fontSize: cafeFontSize * 0.6,
-                          fontWeight: FontWeight.w400,
                           letterSpacing: cafeFontSize * 0.15,
                           color: Colors.black87,
                         ),
+                        children: [
+                          TextSpan(
+                            text: 'ENGLISH ',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                          TextSpan(
+                            text: 'ONLY',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black,
+                            ),
+                          ),
+                          TextSpan(
+                            text: ' CAFE',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ],
                       ),
-                      Text(
-                        'ONLY',
-                        style: TextStyle(
-                          fontFamily: 'SF Pro Display',
-                          fontSize: cafeFontSize * 0.6,
-                          fontWeight: FontWeight.w700, // Bold weight for just "ONLY"
-                          letterSpacing: cafeFontSize * 0.15,
-                          color: Colors.black, // Slightly darker for emphasis
-                        ),
-                      ),
-                      Text(
-                        ' CAFE',
-                        style: TextStyle(
-                          fontFamily: 'SF Pro Display',
-                          fontSize: cafeFontSize * 0.6,
-                          fontWeight: FontWeight.w400,
-                          letterSpacing: cafeFontSize * 0.15,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ],
               ),

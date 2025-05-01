@@ -19,7 +19,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: ">=2.17.0 <3.0.0"
+  sdk: ^3.7.2
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -39,28 +39,21 @@ dependencies:
   nfc_manager: ^3.5.0
   google_fonts: ^6.1.0
   sign_in_button: ^3.0.0
-  cupertino_icons: ^1.0.2
+
   image_picker: ^1.1.2    # For picking images and videos
   path_provider: ^2.0.11    # For accessing app directorie
   path: ^1.8.2             # For path manipulation
   video_compress: ^3.1.4   # Or latest version
   flip_card: ^0.7.0
 
-
-
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
-
+  cupertino_icons: ^1.0.8
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^3.0.0
-# Add this section
-dependency_overrides:
-  win32: ^5.5.3
-  # You might also need to add archive if you're getting errors with it
-  # archive: ^3.6.1
+
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your

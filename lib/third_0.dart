@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:nfc_manager/nfc_manager.dart';// Import the home_page.dart file
-import 'package:flutter/services.dart'; // Import the services package
+import 'package:nfc_manager/nfc_manager.dart';
+import 'package:flutter/services.dart';
 
 class ThirdPage extends StatefulWidget {
   const ThirdPage({super.key});
@@ -123,120 +123,160 @@ class _ThirdPageState extends State<ThirdPage> {
     final screenSize = MediaQuery.of(context).size;
 
     return SafeArea(
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(
 
-          children: [
-            SizedBox(height: 13),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final cardWidth = screenSize.width * 0.7;
-                final cardHeight = screenSize.height * 1;
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Expanded(
 
-                return Container(
-                  width: cardWidth,
-                  height: cardHeight * 0.95,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                  ),
-                  child: _buildLandscapeGrid(cardWidth), // Always use landscape layout
-                );
-              },
-            ),
+                child: LayoutBuilder(
 
-          ],
+                  builder: (context, constraints) {
+                    // Calculate adaptive sizes based on available space
+                    final availableWidth = constraints.maxWidth;
+                    final availableHeight = constraints.maxHeight;
+
+                    // Use aspectRatio to determine orientation
+                    final isVeryTallAspectRatio = availableHeight / availableWidth > 2.0;
+
+                    // Adjust card size based on aspect ratio
+                    final cardWidth = isVeryTallAspectRatio
+                        ? availableWidth * 0.95  // Use more width on tall devices
+                        : availableWidth * 0.7;  // Original width for normal devices
+
+                    return Container(
+
+                      width: cardWidth,
+                      // Let height be determined by content
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+
+                      ),
+                      child: FittedBox(
+                        fit: BoxFit.contain,
+                        child: SizedBox(
+                          width: cardWidth,
+                          height: cardWidth * 0.65, // Maintain a 5:3 aspect ratio
+                          child: _buildLandscapeGrid(cardWidth, screenSize),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
-
   }
 
-  // Helper method for landscape mode grid
-  Widget _buildLandscapeGrid(double cardWidth) {
+// Updated grid builder method
+  Widget _buildLandscapeGrid(double cardWidth, Size screenSize) {
     return GridView.builder(
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+      shrinkWrap: true,
+      padding: EdgeInsets.only(top: 15),
+      physics: const NeverScrollableScrollPhysics(), // Keep this to prevent interference with PageView
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 5,
-        childAspectRatio: 1,
+        childAspectRatio: 1.0,
+
       ),
       itemCount: 15,
       itemBuilder: (context, index) {
-        // Use a horizontal arrangement for landscape
-        return _buildGridItem(index, cardWidth);
+        return _buildGridItem(index, cardWidth, screenSize);
       },
     );
   }
-
   // Helper method for grid items
-  Widget _buildGridItem(int index, double cardWidth) {
+  Widget _buildGridItem(int index, double cardWidth, Size screenSize) {
     bool isFilled = index < stampCount;
     bool isFreeReward = index == 7 || index == 14; // 8th and 15th spots
 
-    return Container(
-      margin: const EdgeInsets.only(),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.black, width: 0.5),
-        color: isFreeReward ? Colors.grey[300] : Colors.white,
-      ),
-      child: Stack(
-        children: [
-          if (isFilled)
-            Center(
-              child: isFreeReward
-                  ? const Text('STAMPED\nREWARD',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontWeight: FontWeight.bold))
-                  : Image.asset('assets/Maple_leaf_grey.png'),
+    // Calculate font size based on screen dimensions
+    final baseFontSize = screenSize.width * 0.018; // Adjust this multiplier as needed
+
+    // Calculate cell size to position elements relatively
+    final cellSize = cardWidth / 5; // Since we have 5 columns
+
+    return LayoutBuilder(
+
+        builder: (context, constraints) {
+          // Get the actual size of each grid cell
+          final cellWidth = constraints.maxWidth;
+          final cellHeight = constraints.maxHeight;
+
+          return Container(
+            margin: const EdgeInsets.only(),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.black, width: 0.5),
+              color: isFreeReward ? Colors.grey[300] : Colors.white,
             ),
-          if (!isFilled && isFreeReward)
-            Positioned(
-              bottom: 70,  // Position at the bottom
-              left: 0,    // Start from the left edge
-              right: -80,   // Extend to the right edge
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 16.0),  // Add some padding from the bottom
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Padding(
-                    padding: const EdgeInsets.all(4.0),
-                    child: index == 7
-                        ? const Text('FREE\nREFILL',
-                        textAlign: TextAlign.end,
-                        style: TextStyle(fontWeight: FontWeight.bold))
-                        : const Text('FREE\nDRINK',
-                        textAlign: TextAlign.end,
-                        style: TextStyle(fontWeight: FontWeight.bold)),
+            child: Stack(
+              children: [
+                if (isFilled && !isFreeReward)
+                  Center(
+                    child: Image.asset('assets/Maple_leaf_grey.png'),
+                  ),
+
+                if (isFilled && isFreeReward)
+                  Positioned(
+                    top: cellHeight * 0.1, // Position at 10% from top
+                    right: cellWidth * 0.1, // Position at 10% from right
+                    child: Text('STAMPED\nREWARD',
+                        textAlign: TextAlign.right,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: baseFontSize * 1.1,
+                        )),
+                  ),
+
+                if (!isFilled && isFreeReward)
+                  Positioned(
+                    top: cellHeight * 0.025, // Position at 10% from top
+                    right: cellWidth * 0.025, // Position at 10% from right
+                    child: Text(
+                      index == 7 ? 'FREE\nREFILL' : 'FREE\nDRINK',
+                      textAlign: TextAlign.right,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: baseFontSize, // Responsive font size
+                      ),
+                    ),
+                  ),
+
+                Positioned(
+                  bottom: cellHeight * 0.05, // Position at 5% from bottom
+                  right: cellWidth * 0.05, // Position at 5% from right
+                  child: Text(
+                    '${index + 1}',
+                    style: TextStyle(
+                      fontSize: baseFontSize * 0.9, // Slightly smaller
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
-              ),
+
+                if (index == 1 && isFilled)
+                  Positioned(
+                    top: cellHeight * 0.05, // Position at 5% from top
+                    right: cellWidth * 0.05, // Position at 5% from right
+                    child: SizedBox(
+                      width: cellWidth * 0.4,
+                      height: cellHeight * 0.4,
+                      child: const FittedBox(
+                        fit: BoxFit.contain,
+                        child: Icon(Icons.eco, color: Colors.grey),
+                      ),
+                    ),
+                  ),
+              ],
             ),
-          Positioned(  // Change Align to Positioned for consistent positioning
-            bottom: 4.0,
-            right: 4.0,
-            child: Text(
-              '${index + 1}',
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          if (index == 1 && isFilled)
-            Positioned(
-              top: 0,
-              right: 0,
-              child: SizedBox(
-                width: cardWidth / 6 * 0.6,
-                height: cardWidth / 6 * 0.7,
-                child: const FittedBox(
-                  fit: BoxFit.contain,
-                  child: Icon(Icons.eco, color: Colors.grey),
-                ),
-              ),
-            ),
-        ],
-      ),
+          );
+        }
     );
   }
 }
