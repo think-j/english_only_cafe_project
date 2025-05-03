@@ -1,0 +1,20 @@
+workflows:
+  ios-release-workflow: # Your workflow name
+    name: iOS App Store Build
+    # ... other settings like instance_type, environment variables ...
+    scripts:
+      # ... other setup scripts like flutter packages pub get, cd ios && pod install etc. ...
+      - name: Set up code signing # Example if using manual credentials stored as variables
+        script: | # Using pipe | for multi-line script
+          keychain initialize
+          keychain add-certificates --certificate $CM_CERTIFICATE --certificate-password $CM_CERTIFICATE_PASSWORD
+          keychain add-provisioning-profile --profile $CM_PROVISIONING_PROFILE
+      - name: Build IPA for release
+        script: |
+          flutter build ipa --release
+          # If needed for manual signing, you might add:
+          # --export-options-plist=$CM_EXPORT_OPTIONS_PATH
+    artifacts:
+      - build/ios/ipa/*.ipa # Tell Codemagic where to find the IPA artifact
+    publishing:
+    # ... Add your app_store_connect configuration here ...s

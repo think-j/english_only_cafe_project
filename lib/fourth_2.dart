@@ -20,6 +20,25 @@ class PhotoItem {
   int get totalPhotoCount => 1 + (subPhotos?.length ?? 0);
 }
 
+// Static class to hold our data across navigation changes
+class PhotoDataManager {
+  // Static singleton instance
+  static final PhotoDataManager _instance = PhotoDataManager._internal();
+
+  // Factory constructor
+  factory PhotoDataManager() {
+    return _instance;
+  }
+
+  // Private constructor
+  PhotoDataManager._internal();
+
+  // Data that needs to persist
+  final List<PhotoItem> photoItems = [];
+  String appTitle = "My Photo Albums";
+  bool isEditMode = false;
+}
+
 // A StatefulWidget that displays a horizontal, scrollable photo album
 class FourthMedia extends StatefulWidget {
   const FourthMedia({Key? key}) : super(key: key);
@@ -30,11 +49,21 @@ class FourthMedia extends StatefulWidget {
 
 // The State class for FourthMedia, handling album logic and UI updates
 class _FourthMediaState extends State<FourthMedia> {
-  final List<PhotoItem> photoItems = [];
+  // Use the static manager instead of local variables
+  final PhotoDataManager _dataManager = PhotoDataManager();
   final ImagePicker _picker = ImagePicker();
 
-  String _appTitle = "My Photo Albums";
-  bool _isEditMode = false;
+  // Shorthand getters to keep code clean
+  List<PhotoItem> get photoItems => _dataManager.photoItems;
+  String get appTitle => _dataManager.appTitle;
+  bool get isEditMode => _dataManager.isEditMode;
+
+  // Setter for edit mode
+  set isEditMode(bool value) {
+    setState(() {
+      _dataManager.isEditMode = value;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -78,7 +107,7 @@ class _FourthMediaState extends State<FourthMedia> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    _appTitle,
+                    appTitle,
                     style: const TextStyle(fontSize: 24, color: Colors.black87),
                   ),
                   const SizedBox(width: 8),
@@ -115,16 +144,16 @@ class _FourthMediaState extends State<FourthMedia> {
             const SizedBox(height: 20),
             Center(
               child: ElevatedButton.icon(
-                  icon: Icon(_isEditMode ? Icons.check_rounded : Icons.edit),
-                  label: Text(_isEditMode ? "Done Editing" : "Edit Albums"),
+                  icon: Icon(isEditMode ? Icons.check_rounded : Icons.edit),
+                  label: Text(isEditMode ? "Done Editing" : "Edit Albums"),
                   onPressed: () {
                     setState(() {
-                      _isEditMode = !_isEditMode;
+                      isEditMode = !isEditMode;
                     });
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _isEditMode ? Colors.green : null,
-                    foregroundColor: _isEditMode ? Colors.white : null,
+                    backgroundColor: isEditMode ? Colors.green : null,
+                    foregroundColor: isEditMode ? Colors.white : null,
                   )
               ),
             ),
@@ -205,7 +234,7 @@ class _FourthMediaState extends State<FourthMedia> {
                   ),
 
                 // Delete Button Overlay (visible in edit mode)
-                if (_isEditMode)
+                if (isEditMode)
                   Positioned(
                     top: 4,
                     right: 4,
@@ -268,9 +297,9 @@ class _FourthMediaState extends State<FourthMedia> {
         onTap: _createNewAlbum,
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.grey[50],
-            border: Border.all(color: Colors.grey[300]!),
-            borderRadius: BorderRadius.circular(8)
+              color: Colors.grey[50],
+              border: Border.all(color: Colors.grey[300]!),
+              borderRadius: BorderRadius.circular(8)
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -287,7 +316,7 @@ class _FourthMediaState extends State<FourthMedia> {
 
   // Edit application title
   Future<void> _editAppTitle() async {
-    final TextEditingController titleController = TextEditingController(text: _appTitle);
+    final TextEditingController titleController = TextEditingController(text: appTitle);
 
     final String? newTitle = await showDialog<String>(
       context: context,
@@ -303,7 +332,7 @@ class _FourthMediaState extends State<FourthMedia> {
           TextButton(
             onPressed: () => Navigator.pop(
               context,
-              titleController.text.trim().isNotEmpty ? titleController.text.trim() : _appTitle,
+              titleController.text.trim().isNotEmpty ? titleController.text.trim() : appTitle,
             ),
             child: const Text('Save'),
           ),
@@ -311,8 +340,10 @@ class _FourthMediaState extends State<FourthMedia> {
       ),
     );
 
-    if (newTitle != null && newTitle != _appTitle && mounted) {
-      setState(() { _appTitle = newTitle; });
+    if (newTitle != null && newTitle != appTitle && mounted) {
+      setState(() {
+        _dataManager.appTitle = newTitle;
+      });
     }
   }
 

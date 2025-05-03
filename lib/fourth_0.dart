@@ -1,13 +1,155 @@
+// 1. First, create a UserProfileData class to hold all profile information
+// Create a new file named user_profile_data.dart
 
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
-import 'dart:convert';
 import 'package:wakelock_plus/wakelock_plus.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter/rendering.dart';
 import 'fourth_1.dart';
 import 'fourth_2.dart';
+
+class UserProfileData extends ChangeNotifier {
+  static final UserProfileData _instance = UserProfileData._internal();
+
+  factory UserProfileData() {
+    return _instance;
+  }
+
+  UserProfileData._internal();
+
+  // Profile data fields
+  String name = '';
+  String country = '';
+  String city = '';
+  String statusNote = '';
+  String hobby = '';
+  String languageNote = '';
+  List<String> selectedLanguages = [];
+  String selectedStatus = '';
+
+  // Controllers
+  final nameController = TextEditingController();
+  final countryController = TextEditingController();
+  final cityController = TextEditingController();
+  final statusNoteController = TextEditingController();
+  final hobbyController = TextEditingController();
+  final languageNoteController = TextEditingController();
+
+  // SharedPreferences key
+  static const String prefsKey = 'user_profile_data';
+
+  // Initialize controllers with data
+  void initControllers() {
+    nameController.text = name;
+    countryController.text = country;
+    cityController.text = city;
+    statusNoteController.text = statusNote;
+    hobbyController.text = hobby;
+    languageNoteController.text = languageNote;
+  }
+
+  // Update the data from controllers
+  void updateFromControllers() {
+    name = nameController.text;
+    country = countryController.text;
+    city = cityController.text;
+    statusNote = statusNoteController.text;
+    hobby = hobbyController.text;
+    languageNote = languageNoteController.text;
+    notifyListeners();
+  }
+
+  // Load data from SharedPreferences
+  Future<void> loadSavedData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedData = prefs.getString(prefsKey);
+
+    if (savedData != null) {
+      try {
+        final Map<String, dynamic> data = json.decode(savedData);
+
+        name = data['name'] ?? '';
+        country = data['country'] ?? '';
+        city = data['city'] ?? '';
+        statusNote = data['statusNote'] ?? '';
+        hobby = data['hobby'] ?? '';
+        languageNote = data['languageNote'] ?? '';
+
+        // Load selected languages
+        selectedLanguages = [];
+        if (data['selectedLanguages'] != null) {
+          List<dynamic> langs = data['selectedLanguages'];
+          selectedLanguages = langs.map((e) => e.toString()).toList();
+        }
+
+        // Load selected status
+        selectedStatus = data['selectedStatus'] ?? '';
+
+        // Update controllers
+        initControllers();
+        notifyListeners();
+      } catch (e) {
+        debugPrint("Error loading data: $e");
+      }
+    }
+  }
+
+  // Save data to SharedPreferences
+  Future<void> saveData() async {
+    // First update from controllers
+    updateFromControllers();
+
+    final prefs = await SharedPreferences.getInstance();
+
+    final Map<String, dynamic> data = {
+      'name': name,
+      'country': country,
+      'city': city,
+      'statusNote': statusNote,
+      'hobby': hobby,
+      'languageNote': languageNote,
+      'selectedLanguages': selectedLanguages,
+      'selectedStatus': selectedStatus,
+      'lastSaved': DateTime.now().toIso8601String(),
+    };
+
+    await prefs.setString(prefsKey, json.encode(data));
+  }
+
+  // Set language selection
+  void setLanguageSelection(String lang, bool isSelected) {
+    if (isSelected && !selectedLanguages.contains(lang)) {
+      selectedLanguages.add(lang);
+    } else if (!isSelected && selectedLanguages.contains(lang)) {
+      selectedLanguages.remove(lang);
+    }
+    notifyListeners();
+  }
+
+  // Set status selection
+  void setStatusSelection(String status) {
+    selectedStatus = (selectedStatus == status) ? '' : status;
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    countryController.dispose();
+    cityController.dispose();
+    statusNoteController.dispose();
+    hobbyController.dispose();
+    languageNoteController.dispose();
+    super.dispose();
+  }
+}
+
+
+// 2. Now, modify your FourthPage class to implement PageStorage
+
 
 double _buttonOpacity = 1.0;
 const double kDefaultFontSize = 14.0;
@@ -20,73 +162,70 @@ class FourthPage extends StatefulWidget {
 }
 
 class _FourthPageState extends State<FourthPage> {
-  // --- State variables for infinite PageView ---
+  // PageStorage key to preserve page states
+  final PageStorageBucket _bucket = PageStorageBucket();
 
   late PageController _pageController;
-
   late final List<Widget> _actualPages;
-
   late final int _actualPageCount;
+  final int _virtualPageCount = 10000;
 
-  final int _virtualPageCount = 10000; // Large number for "infinite" scrolling
+  // Create an instance of UserProfileData
+  final UserProfileData _profileData = UserProfileData();
 
-  // --- End PageView state variables ---
   @override
   void initState() {
-    debugPaintSizeEnabled = false;
+
     super.initState();
-    WakelockPlus.enable(); // Keeps the screen awake
+    WakelockPlus.enable();
 
-    // Ensure immersive mode is applied in initState too
+    // Load saved data on initialization
+    _profileData.loadSavedData();
+
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
-
-    // Re-enforce landscape orientation
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
     ]);
+
+    // Each page gets a unique PageStorage key
     _actualPages = [
-
-      // Your existing HomePage widget
-
-      const LinkQrGenerator(), // Your second page widget
-
-      const FourthMedia(),     // Your third page widget
-      const HomePage(),
-      // Add more widgets here if needed
-
+      PageStorage(
+        key: const PageStorageKey('linkQrGenerator'),
+        bucket: _bucket,
+        child: const LinkQrGenerator(),
+      ),
+      PageStorage(
+        key: const PageStorageKey('fourthMedia'),
+        bucket: _bucket,
+        child: const FourthMedia(),
+      ),
+      PageStorage(
+        key: const PageStorageKey('homePage'),
+        bucket: _bucket,
+        child: const HomePage(),
+      ),
     ];
 
-    _actualPageCount = _actualPages.length; // Calculate the real number of pages
-
-
-
-    // Initialize the PageController starting near the middle of the virtual count
-
+    _actualPageCount = _actualPages.length;
     _pageController = PageController(
-
       initialPage: _virtualPageCount ~/ 2,
-
     );
   }
 
-
   @override
   void dispose() {
-
-    _pageController.dispose(); // Dispose the PageController
-
-    WakelockPlus(); // Consider disabling wakelock here if appropriate for your app lifecycle
+    _pageController.dispose();
+    // Consider disabling wakelock here
+    WakelockPlus.disable();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // Force orientation check at build time
     final Orientation currentOrientation = MediaQuery.of(context).orientation;
 
     if (currentOrientation == Orientation.portrait) {
-      // Force it back to landscape immediately
       Future.microtask(() {
         SystemChrome.setPreferredOrientations([
           DeviceOrientation.landscapeLeft,
@@ -101,27 +240,16 @@ class _FourthPageState extends State<FourthPage> {
         children: [
           Expanded(
             child: PageView.builder(
-
-              controller: _pageController,          // Assign the controller
-
-              scrollDirection: Axis.horizontal,     // Keep horizontal scrolling
-
-              physics: const BouncingScrollPhysics(), // Keep the physics
-
-              itemCount: _virtualPageCount,         // Use the large virtual count
-
+              controller: _pageController,
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              itemCount: _virtualPageCount,
               itemBuilder: (context, index) {
-
-                // Calculate the actual page index using modulo
-
                 final actualIndex = index % _actualPageCount;
 
-                // Return the corresponding page from your list
-
-                return _actualPages[actualIndex];
-
+                // Wrap each page with AutomaticKeepAliveClientMixin to preserve state
+                return KeepAlivePage(child: _actualPages[actualIndex]);
               },
-
             ),
           ),
         ],
@@ -130,7 +258,30 @@ class _FourthPageState extends State<FourthPage> {
   }
 }
 
-// HomePage class with improved responsiveness and floating save button
+// Add this wrapper to ensure page state is preserved
+class KeepAlivePage extends StatefulWidget {
+  final Widget child;
+
+  const KeepAlivePage({Key? key, required this.child}) : super(key: key);
+
+  @override
+  State<KeepAlivePage> createState() => _KeepAlivePageState();
+}
+
+class _KeepAlivePageState extends State<KeepAlivePage> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return widget.child;
+  }
+}
+
+
+// 3. Finally, modify your HomePage class to use the shared UserProfileData
+
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
 
@@ -139,110 +290,42 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  @override
-  void initState() {
-    super.initState();
-    _startInactivityTimer();
-    _loadSavedData(); // Load previously saved data
-
-    // Ensure immersive mode is applied in initState too
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
-  }
-
-  final _nameController = TextEditingController();
-  final _countryController = TextEditingController();
-  final _cityController = TextEditingController();
-  final _statusNoteController = TextEditingController();
-  final _hobbyController = TextEditingController();
-  final _languageNoteController = TextEditingController();
-
-  // Key for SharedPreferences
-  static const String _prefsKey = 'user_profile_data';
-
-  final List<String> selectedLanguages = [];
-  final List<String> languageOptions = [
-    'JP',
-    'EN',
-    'FR',
-    'ES',
-    'PT',
-    'AR',
-    'CH',
-    'KR',
-  ];
-
-  String selectedStatus = "";
-  final List<String> statusOptions = ['STUDENT', 'WORKER'];
+  // Get the singleton instance of UserProfileData
+  final UserProfileData _profileData = UserProfileData();
 
   Timer? _inactivityTimer;
 
   @override
+  void initState() {
+    super.initState();
+    _startInactivityTimer();
+
+    // No need to load data here, it's already loaded in FourthPage
+
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
+  }
+
+  @override
   void dispose() {
     _inactivityTimer?.cancel();
-    _nameController.dispose();
-    _countryController.dispose();
-    _cityController.dispose();
-    _statusNoteController.dispose();
-    _hobbyController.dispose();
-    _languageNoteController.dispose();
+    // We don't dispose controllers here as they're managed by UserProfileData
     super.dispose();
   }
 
-  // Method to load saved data from SharedPreferences
-  Future<void> _loadSavedData() async {
-    final prefs = await SharedPreferences.getInstance();
-    final savedData = prefs.getString(_prefsKey);
-
-    if (savedData != null) {
-      try {
-        final Map<String, dynamic> data = json.decode(savedData);
-        setState(() {
-          _nameController.text = data['name'] ?? '';
-          _countryController.text = data['country'] ?? '';
-          _cityController.text = data['city'] ?? '';
-          _statusNoteController.text = data['statusNote'] ?? '';
-          _hobbyController.text = data['hobby'] ?? '';
-          _languageNoteController.text = data['languageNote'] ?? '';
-
-          // Load selected languages
-          selectedLanguages.clear();
-          if (data['selectedLanguages'] != null) {
-            List<dynamic> langs = data['selectedLanguages'];
-            selectedLanguages.addAll(langs.map((e) => e.toString()));
-          }
-
-          // Load selected status
-          selectedStatus = data['selectedStatus'] ?? '';
-        });
-      } catch (e) {
-        debugPrint("Error occurred: $e");
-      }
+  // Method for the save button
+  Future<void> _saveProfile() async {
+    await _profileData.saveData();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Profile saved successfully')),
+      );
     }
   }
 
-  // Method to save data to SharedPreferences
-  Future<void> _saveData() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    final Map<String, dynamic> data = {
-      'name': _nameController.text,
-      'country': _countryController.text,
-      'city': _cityController.text,
-      'statusNote': _statusNoteController.text,
-      'hobby': _hobbyController.text,
-      'languageNote': _languageNoteController.text,
-      'selectedLanguages': selectedLanguages,
-      'selectedStatus': selectedStatus,
-      'lastSaved': DateTime.now().toIso8601String(),
-    };
-
-    await prefs.setString(_prefsKey, json.encode(data));
-  }
-
-  // Improved user interaction handler to keep button visible when typing
+  // Improved user interaction handler
   void _onUserInteraction() {
     setState(() {
-      _buttonOpacity = 1.0; // Always set to visible on interaction
+      _buttonOpacity = 1.0;
     });
     _startInactivityTimer();
   }
@@ -265,27 +348,21 @@ class _HomePageState extends State<HomePage> {
     bool isBigField = label.contains("NAME") || label.contains("HOBBY");
     bool isOriginField = label.contains("COUNTRY") || label.contains("CITY");
 
-    // Calculate dynamic font sizes based on screen size
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
 
-    // Scale font sizes relative to screen dimensions
-    final dynamicSize = screenHeight * 0.025; // 2.5% of screen height
-
-    // Set label font size
+    final dynamicSize = screenHeight * 0.025;
     final labelFontSize = fontSize + (dynamicSize * 0.7);
 
-    // Calculate input text size based on field type and screen size
     double inputTextSize;
     if (isBigField) {
-      inputTextSize = screenHeight * 0.09; // Larger font for name and hobby (adjusted)
+      inputTextSize = screenHeight * 0.09;
     } else if (isOriginField) {
-      inputTextSize = screenHeight * 0.055; // Smaller font for country/city (adjusted)
+      inputTextSize = screenHeight * 0.055;
     } else {
-      inputTextSize = screenHeight * 0.045; // Default size for other fields (adjusted)
+      inputTextSize = screenHeight * 0.045;
     }
 
-    // Adjust text sizes for smaller screens
     if (screenWidth < 600) {
       inputTextSize *= 0.85;
     }
@@ -307,7 +384,7 @@ class _HomePageState extends State<HomePage> {
                 controller: controller,
                 maxLines: 1,
                 textAlignVertical: TextAlignVertical.center,
-                onChanged: (_) => _onUserInteraction(), // Ensure button stays visible when typing
+                onChanged: (_) => _onUserInteraction(),
                 style: TextStyle(
                   fontSize: inputTextSize,
                   height: 1.1,
@@ -327,13 +404,25 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    // Use FocusScope to detect when keyboard appears
     final FocusNode focusNode = FocusNode();
     focusNode.addListener(() {
       if (focusNode.hasFocus) {
         _onUserInteraction();
       }
     });
+
+    // Access controllers from the shared ProfileData
+    final nameController = _profileData.nameController;
+    final countryController = _profileData.countryController;
+    final cityController = _profileData.cityController;
+    final statusNoteController = _profileData.statusNoteController;
+    final hobbyController = _profileData.hobbyController;
+    final languageNoteController = _profileData.languageNoteController;
+
+    final List<String> languageOptions = [
+      'JP', 'EN', 'FR', 'ES', 'PT', 'AR', 'CH', 'KR',
+    ];
+    final List<String> statusOptions = ['STUDENT', 'WORKER'];
 
     return Focus(
       focusNode: focusNode,
@@ -342,14 +431,13 @@ class _HomePageState extends State<HomePage> {
         onTap: _onUserInteraction,
         onPanDown: (_) => _onUserInteraction(),
         child: Scaffold(
-          resizeToAvoidBottomInset: false, // Prevent keyboard from causing layout issues
-          extendBody: true, // Important: ensures content isn't hidden behind FAB
+          resizeToAvoidBottomInset: false,
+          extendBody: true,
           backgroundColor: const Color(0xFFFFFFFF),
           appBar: null,
           body: SafeArea(
             child: Column(
               children: [
-                // Main form content - takes all available space
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16),
@@ -372,10 +460,9 @@ class _HomePageState extends State<HomePage> {
                                     ),
                                   ),
                                   padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                                  child: fieldBlock("NAME (NICK NAME)", _nameController),
+                                  child: fieldBlock("NAME (NICK NAME)", nameController),
                                 ),
                               ),
-                              // Rest of your form content
                               Expanded(
                                 flex: 20,
                                 child: Container(
@@ -391,7 +478,7 @@ class _HomePageState extends State<HomePage> {
                                           padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                           child: fieldBlock(
                                             "COUNTRY OF ORIGIN",
-                                            _countryController,
+                                            countryController,
                                           ),
                                         ),
                                       ),
@@ -401,7 +488,7 @@ class _HomePageState extends State<HomePage> {
                                           padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                           child: fieldBlock(
                                             "CITY OF ORIGIN",
-                                            _cityController,
+                                            cityController,
                                           ),
                                         ),
                                       ),
@@ -438,17 +525,13 @@ class _HomePageState extends State<HomePage> {
                                           scrollDirection: Axis.horizontal,
                                           child: Row(
                                             children: languageOptions.map((lang) {
-                                              final isSelected = selectedLanguages.contains(lang);
+                                              final isSelected = _profileData.selectedLanguages.contains(lang);
                                               return GestureDetector(
                                                 onTap: () {
                                                   setState(() {
-                                                    if (isSelected) {
-                                                      selectedLanguages.remove(lang);
-                                                    } else {
-                                                      selectedLanguages.add(lang);
-                                                    }
+                                                    _profileData.setLanguageSelection(lang, !isSelected);
                                                   });
-                                                  _onUserInteraction(); // Make button visible when changing selection
+                                                  _onUserInteraction();
                                                 },
                                                 child: AnimatedContainer(
                                                   duration: const Duration(milliseconds: 200),
@@ -503,7 +586,7 @@ class _HomePageState extends State<HomePage> {
                                         height: 30,
                                         child: Center(
                                           child: TextField(
-                                            controller: _languageNoteController,
+                                            controller: languageNoteController,
                                             textAlignVertical: TextAlignVertical.center,
                                             onChanged: (_) => _onUserInteraction(),
                                             decoration: const InputDecoration(
@@ -559,13 +642,13 @@ class _HomePageState extends State<HomePage> {
                                           child: Row(
                                             mainAxisAlignment: MainAxisAlignment.center,
                                             children: statusOptions.map((status) {
-                                              final isSelected = selectedStatus == status;
+                                              final isSelected = _profileData.selectedStatus == status;
                                               return GestureDetector(
                                                 onTap: () {
                                                   setState(() {
-                                                    selectedStatus = isSelected ? '' : status;
+                                                    _profileData.setStatusSelection(status);
                                                   });
-                                                  _onUserInteraction(); // Make button visible when changing selection
+                                                  _onUserInteraction();
                                                 },
                                                 child: AnimatedContainer(
                                                   duration: const Duration(milliseconds: 200),
@@ -617,7 +700,7 @@ class _HomePageState extends State<HomePage> {
                                         height: 30,
                                         child: Center(
                                           child: TextField(
-                                            controller: _statusNoteController,
+                                            controller: statusNoteController,
                                             textAlignVertical: TextAlignVertical.center,
                                             onChanged: (_) => _onUserInteraction(),
                                             decoration: const InputDecoration(
@@ -651,7 +734,7 @@ class _HomePageState extends State<HomePage> {
                                   margin: const EdgeInsets.only(bottom: 16),
                                   child: fieldBlock(
                                     "HOBBY • SPECIAL SKILL • ETC",
-                                    _hobbyController,
+                                    hobbyController,
                                   ),
                                 ),
                               ),
@@ -669,15 +752,9 @@ class _HomePageState extends State<HomePage> {
             opacity: _buttonOpacity,
             duration: const Duration(milliseconds: 300),
             child: FloatingActionButton.extended(
-              onPressed: () async {
-                await _saveData();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Profile saved successfully')),
-                );
-              },
+              onPressed: _saveProfile,
               icon: const Icon(Icons.save),
               label: const Text('Save Profile'),
-
             ),
           ),
           floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
