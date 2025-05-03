@@ -767,7 +767,7 @@ class _PhotoSlideshowScreenState extends State<PhotoSlideshowScreen> {
           if (index < 0 || index >= widget.photoItems.length) {
             return const Center(
               child: Text(
-                  "Invalid image indexn",
+                  "Invalid image indexnx",
                   style: TextStyle(color: Colors.white)
               ),
             );
