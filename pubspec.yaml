@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.0+3
+version: 1.0.0+4
 
 environment:
   sdk: ^3.7.2
@@ -39,7 +39,7 @@ dependencies:
   nfc_manager: ^3.5.0
   google_fonts: ^6.1.0
   sign_in_button: ^3.0.0
-
+  flutter_launcher_icons: ^0.13.1
   image_picker: ^1.1.2    # For picking images and videos
   path_provider: ^2.0.11    # For accessing app directorie
   path: ^1.8.2             # For path manipulation
@@ -102,3 +102,8 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+flutter_launcher_icons:
+  android: true # Or false if you only need iOS
+  ios: true
+  image_path: "assets/EOCLogo.png" # IMPORTANT: Update this path to where your 1024x1024 source icon is located
+  remove_alpha_ios: true # Often needed for App Store icons
