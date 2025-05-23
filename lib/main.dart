@@ -3,12 +3,14 @@ import 'first_0.dart';
 import 'second_0.dart';
 import 'third_0.dart';
 import 'fourth_0.dart';
+import 'fourth_2.dart';
 
 import 'package:flutter/services.dart';
 import 'package:flutter/rendering.dart';
 void main() async {
   debugPaintSizeEnabled = false;
   WidgetsFlutterBinding.ensureInitialized();
+  await PhotoDataManager().initialize();
 
   await SystemChrome.setPreferredOrientations([
 

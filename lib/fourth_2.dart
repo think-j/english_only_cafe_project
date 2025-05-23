@@ -1,8 +1,10 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
+import 'package:shared_preferences/shared_preferences.dart';
 
 // Enhanced data model for photo items that can contain multiple photos
 class PhotoItem {
@@ -18,7 +20,20 @@ class PhotoItem {
 
   // Helper to get total photo count (main photo + sub photos)
   int get totalPhotoCount => 1 + (subPhotos?.length ?? 0);
+
+  Map<String, dynamic> toJson() => {
+    'filePath': filePath,
+    'subPhotos': subPhotos,
+    'albumName': albumName,
+  };
+
+  factory PhotoItem.fromJson(Map<String, dynamic> json) => PhotoItem(
+    filePath: json['filePath'] as String,
+    subPhotos: (json['subPhotos'] as List<dynamic>?)?.map((e) => e as String).toList(),
+    albumName: json['albumName'] as String?,
+  );
 }
+
 
 // Static class to hold our data across navigation changes
 class PhotoDataManager {
@@ -37,6 +52,76 @@ class PhotoDataManager {
   final List<PhotoItem> photoItems = [];
   String appTitle = "My Photo Albums";
   bool isEditMode = false;
+  static const String _photoItemsKey = 'photo_items_key';
+  static const String _appTitleKey = 'app_title_key';
+
+  // Call this when the app starts
+  Future<void> initialize() async {
+    await _loadAppTitle();
+    await _loadPhotoItems();
+  }
+
+  Future<void> _savePhotoItems() async {
+    final prefs = await SharedPreferences.getInstance();
+    List<String> photoItemsJson = photoItems.map((item) => jsonEncode(item.toJson())).toList();
+    await prefs.setStringList(_photoItemsKey, photoItemsJson);
+    print("PhotoDataManager: Photo items saved!");
+  }
+
+  Future<void> _loadPhotoItems() async {
+    final prefs = await SharedPreferences.getInstance();
+    List<String>? photoItemsJson = prefs.getStringList(_photoItemsKey);
+    if (photoItemsJson != null) {
+      photoItems.clear(); // Clear current in-memory list
+      photoItems.addAll(
+          photoItemsJson.map((itemJson) => PhotoItem.fromJson(jsonDecode(itemJson)))
+      );
+      print("PhotoDataManager: Photo items loaded: ${photoItems.length} albums");
+    } else {
+      print("PhotoDataManager: No saved photo items found.");
+    }
+  }
+
+  Future<void> saveAppTitle(String title) async {
+    appTitle = title;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_appTitleKey, title);
+    print("PhotoDataManager: App title saved!");
+  }
+
+  Future<void> _loadAppTitle() async {
+    final prefs = await SharedPreferences.getInstance();
+    appTitle = prefs.getString(_appTitleKey) ?? "My Photo Albums"; // Default if not found
+    print("PhotoDataManager: App title loaded.");
+  }
+
+  // --- MODIFIED/NEW METHODS TO MANAGE photoItems AND SAVE ---
+  void addPhotoItem(PhotoItem item) {
+    photoItems.add(item);
+    _savePhotoItems(); // Save after modification
+  }
+
+  void removePhotoItemAt(int index) {
+    if (index >= 0 && index < photoItems.length) {
+      photoItems.removeAt(index);
+      _savePhotoItems(); // Save after modification
+    }
+  }
+
+  void updateAlbumName(int index, String? newName) {
+    if (index >= 0 && index < photoItems.length) {
+      photoItems[index].albumName = newName;
+      _savePhotoItems(); // Save after modification
+    }
+  }
+
+  void addSubPhotosToItem(int index, List<String> newSubPhotoPaths) {
+    if (index >= 0 && index < photoItems.length) {
+      photoItems[index].subPhotos ??= []; // Ensure list exists
+      photoItems[index].subPhotos!.addAll(newSubPhotoPaths);
+      _savePhotoItems(); // Save after modification
+    }
+  }
 }
 
 // A StatefulWidget that displays a horizontal, scrollable photo album
@@ -49,13 +134,14 @@ class FourthMedia extends StatefulWidget {
 
 // The State class for FourthMedia, handling album logic and UI updates
 class _FourthMediaState extends State<FourthMedia> {
-  // Use the static manager instead of local variables
   final PhotoDataManager _dataManager = PhotoDataManager();
   final ImagePicker _picker = ImagePicker();
 
   // Shorthand getters to keep code clean
   List<PhotoItem> get photoItems => _dataManager.photoItems;
   String get appTitle => _dataManager.appTitle;
+
+
   bool get isEditMode => _dataManager.isEditMode;
 
   // Setter for edit mode
@@ -65,6 +151,21 @@ class _FourthMediaState extends State<FourthMedia> {
     });
   }
 
+  @override
+  void initState() {
+    super.initState();
+    // If PhotoDataManager().initialize() is called in main.dart,
+    // the data will be loaded by the time this widget builds.
+    // To ensure the UI reflects the loaded title immediately if it changed:
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        setState(() {
+          // This forces a rebuild if the appTitle was loaded from prefs
+          // and is different from the initial compile-time value.
+        });
+      }
+    });
+  }
   @override
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.of(context).size;
@@ -341,8 +442,9 @@ class _FourthMediaState extends State<FourthMedia> {
     );
 
     if (newTitle != null && newTitle != appTitle && mounted) {
+      await _dataManager.saveAppTitle(newTitle); // Save the new title
       setState(() {
-        _dataManager.appTitle = newTitle;
+        // UI will update because appTitle getter reads from _dataManager
       });
     }
   }
@@ -403,7 +505,16 @@ class _FourthMediaState extends State<FourthMedia> {
           subPhotoPaths.add(savedPath);
         }
       }
-
+      _dataManager.addPhotoItem( // Use the new method from PhotoDataManager
+        PhotoItem(
+          filePath: mainPhotoPath,
+          subPhotos: subPhotoPaths.isEmpty ? null : subPhotoPaths,
+          albumName: albumName,
+        ),
+      );
+      setState(() {
+        // To refresh the UI with the new item
+      });
       setState(() {
         photoItems.add(
           PhotoItem(
@@ -440,10 +551,9 @@ class _FourthMediaState extends State<FourthMedia> {
       }
 
       if (newPaths.isNotEmpty && mounted) {
+        _dataManager.addSubPhotosToItem(index, newPaths); // Use new method
         setState(() {
-          // Create the subPhotos list if it doesn't exist
-          photoItems[index].subPhotos ??= [];
-          photoItems[index].subPhotos!.addAll(newPaths);
+          // To refresh the UI
         });
         _showErrorSnackbar('${newPaths.length} photos added to album');
       }
@@ -566,8 +676,9 @@ class _FourthMediaState extends State<FourthMedia> {
     );
 
     if (newName != null && mounted) {
+      _dataManager.updateAlbumName(index, newName.isEmpty ? null : newName); // Use new method
       setState(() {
-        photoItems[index].albumName = newName.isEmpty ? null : newName;
+        // To refresh UI
       });
     }
   }
@@ -617,45 +728,64 @@ class _FourthMediaState extends State<FourthMedia> {
   }
 
   // Remove a photo item and all associated files
-  void _removeItem(int index) async {
-    if (!mounted || index < 0 || index >= photoItems.length) return;
-    final itemToRemove = photoItems[index];
+  // In _FourthMediaState
 
-    // Delete the main photo file
+// Remove a photo item and all associated files
+  void _removeItem(int index) async {
+    // 1. Initial checks (keep this)
+    if (!mounted || index < 0 || index >= _dataManager.photoItems.length) return; // Use _dataManager.photoItems for length check
+
+    // 2. Get the item to remove (to access its file paths for deletion)
+    // It's safer to get it directly from the source of truth if there's any complex state.
+    // However, using the getter 'photoItems' which points to _dataManager.photoItems is fine here.
+    final PhotoItem itemToRemove = _dataManager.photoItems[index];
+
+    // 3. Your original file deletion logic (keep all of this)
     try {
       final mainFile = File(itemToRemove.filePath);
       if (await mainFile.exists()) {
         await mainFile.delete();
+        print("Deleted main file: ${itemToRemove.filePath}");
       }
 
-      // Delete all sub-photo files
       if (itemToRemove.subPhotos != null) {
         for (final subPath in itemToRemove.subPhotos!) {
           try {
             final subFile = File(subPath);
             if (await subFile.exists()) {
               await subFile.delete();
+              print("Deleted sub-file: $subPath");
             }
           } catch (e) {
             print("Error deleting sub-file: $subPath, error: $e");
+            // Optionally, collect errors and decide if the item should still be removed from list
           }
         }
       }
     } catch (e) {
       print("Error deleting files for item at index $index: $e");
-      if (mounted) _showErrorSnackbar('Could not delete all files', isWarning: true);
+      if (mounted) {
+        _showErrorSnackbar('Could not delete all files', isWarning: true);
+        // You might decide NOT to remove the item from the list if file deletion fails critically.
+        // For now, we'll proceed to remove it from the list regardless.
+      }
     }
 
-    // Remove from the list
-    setState(() {
-      photoItems.removeAt(index);
-    });
+    // 4. Remove the item from PhotoDataManager (which also saves the list)
+    //    and update the UI.
+    _dataManager.removePhotoItemAt(index); // This calls _savePhotoItems() internally
 
-    if (mounted) {
+    // 5. Update the UI
+    //    (Calling setState after the dataManager has updated its list will refresh the UI)
+    if (mounted) { // Check mounted again before calling setState
+      setState(() {
+        // The UI will rebuild and use the updated photoItems list from _dataManager
+      });
+
+      // 6. Show confirmation snackbar (keep this)
       _showErrorSnackbar('Album deleted', isWarning: true);
     }
   }
-
   // Save media file to app directory
   Future<String?> _saveMediaToAppDirectory(String sourcePath) async {
     try {

@@ -39,12 +39,12 @@ dependencies:
   nfc_manager: ^3.5.0
   google_fonts: ^6.1.0
   sign_in_button: ^3.0.0
-
   image_picker: ^1.1.2    # For picking images and videos
   path_provider: ^2.0.11    # For accessing app directorie
   path: ^1.8.2             # For path manipulation
   video_compress: ^3.1.4   # Or latest version
   flip_card: ^0.7.0
+  mobile_scanner: ^7.0.0
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
