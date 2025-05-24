@@ -10,22 +10,25 @@ class ThirdPage extends StatefulWidget {
   State<ThirdPage> createState() => _ThirdPageState();
 }
 
-class _ThirdPageState extends State<ThirdPage> {
+class _ThirdPageState extends State<ThirdPage> with AutomaticKeepAliveClientMixin<ThirdPage> { // STEP 1: Add the mixin
+
+  // ... (all your existing variables like isAvailable, isStaffMode, stampCount, _pinController, etc., remain here)
   bool isAvailable = false;
   bool isStaffMode = false;
-  bool isReward8Claimed = false; // For the 8th stamp (index 7)
-  bool isReward15Claimed = false; // For the 15th stamp (index 14)
+  bool isReward8Claimed = false;
+  bool isReward15Claimed = false;
 
-  int? _claimingRewardIndex; // Index of the reward item currently being pressed
+  int? _claimingRewardIndex;
   Timer? _rewardClaimTimer;
-  final Duration _rewardClaimHoldDuration = const Duration(seconds: 2); // How long to hold
+  final Duration _rewardClaimHoldDuration = const Duration(seconds: 1); // Example: updated duration
 
-  int stampCount = 1;
+  int stampCount = 8; // This state will now be preserved
   final String staffPin = '1234';
   final TextEditingController _pinController = TextEditingController();
+  // The _pageController here is for a PageView potentially *inside* ThirdPage.
+  // If ThirdPage itself is a child of an *external* PageView, this mixin helps preserve ThirdPage's state.
   final PageController _pageController = PageController();
 
-  // NFC payload constants
   final String staffActivationPayload = "MYCAFE_STAFF_ACCESS_V1";
   final String stampTypePrefix = "STAMP_TYPE:";
   final String stampIssuancePayloadKey = "STAMP_ISSUED_BY_STAFF_DEVICE_XYZ";
@@ -34,11 +37,12 @@ class _ThirdPageState extends State<ThirdPage> {
   @override
   void initState() {
     super.initState();
-    stampCount = 8; // Initialize with 8 stamps for testing
+    // stampCount = 8; // Example initial state
     _initializeNFC();
     _setLandscapeOrientation();
   }
-
+  @override // Make sure this annotation is here
+  bool get wantKeepAlive => true; // And this exact line
   Future<void> _initializeNFC() async {
     try {
       final available = await NfcManager.instance.isAvailable();
@@ -82,7 +86,7 @@ class _ThirdPageState extends State<ThirdPage> {
       setState(() {
         _claimingRewardIndex = null;
       });
-      _showSnackBar('Reward claim cancelled.', Colors.orange);
+
     }
   }
 
@@ -326,6 +330,7 @@ class _ThirdPageState extends State<ThirdPage> {
 
     return SafeArea(
       child: Scaffold(
+        resizeToAvoidBottomInset: false,
         backgroundColor: Colors.white,
         body: Padding(
           padding: const EdgeInsets.all(8.0),
@@ -411,7 +416,7 @@ class _ThirdPageState extends State<ThirdPage> {
           children: [
             Icon(
               Icons.nfc,
-              size: width * 0.5,
+              size: width * 0.8,
             ),
             SizedBox(height: width * 0.15),
             Text(
@@ -459,6 +464,172 @@ class _ThirdPageState extends State<ThirdPage> {
         final cellWidth = constraints.maxWidth;
         final cellHeight = constraints.maxHeight;
 
+        Widget itemContent; // We'll define this based on state
+
+        if (isCurrentlyAttemptingClaim) {
+          // State: User is actively holding down to claim
+          itemContent = Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TweenAnimationBuilder<double>(
+                tween: Tween<double>(begin: 2.0, end: 3.0), // Magnify icon (e.g., to 160%)
+                duration: _rewardClaimHoldDuration,
+                builder: (BuildContext context, double scale, Widget? iconToScale) {
+                  return Transform.scale(
+                    scale: scale,
+                    child: iconToScale, // The pre-built icon/image below
+                  );
+                },
+                // This child is the icon that gets scaled.
+                // It represents the stamp or potential reward.
+                child: Container(
+                  width: cellWidth * 0.55, // Base size for the icon container before scaling
+                  height: cellHeight * 0.55,
+                  alignment: Alignment.center,
+                  child: isFilled // Show actual stamp if filled
+                      ? Image.asset(
+                    'assets/Maple_leaf_grey.png',
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Icon(Icons.error, size: cellHeight * 0.3, color: Colors.red);
+                    },
+                  )
+                      : Icon( // Fallback/placeholder icon if not filled but is a reward spot
+                    isThisRewardSpot8 ? Icons.emoji_events_outlined
+                        : isThisRewardSpot15 ? Icons.card_giftcard_outlined
+                        : Icons.star_outline,
+                    size: cellHeight * 0.4,
+                    color: Colors.deepOrangeAccent.withOpacity(0.8),
+                  ),
+                ),
+              ),
+
+
+            ],
+          );
+        } else if (isClaimed) {
+          // State: Reward has been claimed
+          // "REWARD USED" Text with a "pop" animation
+          itemContent = TweenAnimationBuilder<double>(
+            tween: Tween<double>(begin: 0.3, end: 1.0), // Start small, grow to full size
+            duration: const Duration(milliseconds: 500), // Quick pop animation
+            curve: Curves.elasticOut, // Elastic curve for a bouncy "pop"
+            builder: (context, scale, child) {
+              return Transform.scale(
+                scale: scale,
+                child: child,
+              );
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(4.0),
+              child: Text(
+                'REWARD\nUSED',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: baseFontSize * 1.20,
+                  color: Colors.white,
+                  shadows: [
+                    Shadow(
+                      blurRadius: 1.0,
+                      color: Colors.black.withOpacity(0.5),
+                      offset: const Offset(1, 1),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        } else if (canBeClaimed) {
+          // State: Reward is ready to be claimed (but not currently being held)
+          itemContent = Stack(
+            alignment: Alignment.center,
+            children: [
+              Center(
+                child: Image.asset(
+                  'assets/Maple_leaf_grey.png',
+
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Icon(Icons.local_cafe, size: cellHeight * 0.5, color: Colors.brown);
+                  },
+                ),
+              ),
+              Positioned(
+                top: cellHeight * 0.05,
+                right: cellWidth * 0.05,
+                child: Text(
+                  'REWARD\nREADY!',
+                  textAlign: TextAlign.right,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: baseFontSize * 0.95,
+                    color: Colors.green.shade800,
+                  ),
+                ),
+              ),
+
+              Positioned(
+                bottom: cellHeight * 0.05,
+                right: cellWidth * 0.05,
+                child: Text(
+                  '${index + 1}',
+                  style: TextStyle(
+                    fontSize: baseFontSize * 0.9,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+            ],
+          );
+        } else {
+          // State: Normal grid item (empty or filled, not a currently claimable reward)
+          itemContent = Stack(
+            alignment: Alignment.center,
+            children: [
+              if (isFilled)
+                Center(
+                  child: Image.asset(
+                    'assets/Maple_leaf_grey.png',
+                    width: cellWidth * 0.9,
+                    height: cellHeight * 0.9,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Icon(Icons.local_cafe, size: cellHeight * 0.8, color: Colors.brown);
+                    },
+                  ),
+                ),
+              if (isGeneralRewardSpot && !isFilled)
+                Positioned(
+                  top: cellHeight * 0.05,
+                  right: cellWidth * 0.05,
+                  child: Text(
+                    isThisRewardSpot8 ? 'FREE\nREFILL' : 'FREE\nDRINK',
+                    textAlign: TextAlign.right,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: baseFontSize,
+                      color: Colors.black54,
+                    ),
+                  ),
+                ),
+              Positioned(
+                bottom: cellHeight * 0.05,
+                right: cellWidth * 0.05,
+                child: Text(
+                  '${index + 1}',
+                  style: TextStyle(
+                    fontSize: baseFontSize * 0.9,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+            ],
+          );
+        }
+
         return GestureDetector(
           onTapDown: canBeClaimed ? (_) => _startRewardClaimAttempt(index) : null,
           onTapUp: canBeClaimed ? (_) => _cancelRewardClaimAttempt(index) : null,
@@ -469,125 +640,10 @@ class _ThirdPageState extends State<ThirdPage> {
               color: _getGridItemColor(isClaimed, isCurrentlyAttemptingClaim,
                   canBeClaimed, isGeneralRewardSpot),
             ),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                // Stamp Image
-                if (isFilled && !isClaimed && !isCurrentlyAttemptingClaim)
-                  Center(
-                    child: Image.asset(
-                      'assets/Maple_leaf_grey.png', // Your specific image path
-
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) {
-                        // Fallback to icon if image fails to load
-                        return const Icon(Icons.local_cafe, size: 30, color: Colors.brown);
-                      },
-                    ),
-                  ),
-
-                // "REWARD READY!" Text
-                if (canBeClaimed && !isCurrentlyAttemptingClaim)
-                  Positioned(
-                    top: cellHeight * 0.05,
-                    right: cellWidth * 0.05,
-                    child: Text(
-                      'REWARD\nREADY!',
-                      textAlign: TextAlign.right,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: baseFontSize * 1.0,
-                        color: Colors.green.shade800,
-                      ),
-                    ),
-                  ),
-
-                // "HOLD TO CLAIM" / Progress Indicator
-                if (isCurrentlyAttemptingClaim)
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.deepOrange),
-                        strokeWidth: 3.0,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'KEEP HOLDING\nTO CLAIM...',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: baseFontSize * 0.85,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                // "REWARD USED" Text
-                if (isClaimed)
-                  Padding(
-                    padding: const EdgeInsets.all(4.0),
-                    child: Text(
-                      'REWARD\nUSED',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: baseFontSize * 1.25,
-                        color: Colors.white,
-                        shadows: [
-                          Shadow(
-                            blurRadius: 1.0,
-                            color: Colors.black.withOpacity(0.5),
-                            offset: const Offset(1, 1),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                // "FREE REFILL / DRINK" Text
-                if (isGeneralRewardSpot && !isFilled)
-                  Positioned(
-                    top: cellHeight * 0.05,
-                    right: cellWidth * 0.05,
-                    child: Text(
-                      isThisRewardSpot8 ? 'FREE\nREFILL' : 'FREE\nDRINK',
-                      textAlign: TextAlign.right,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: baseFontSize,
-                        color: Colors.black54,
-                      ),
-                    ),
-                  ),
-
-                // Visual cue for "REWARD READY"
-                if (canBeClaimed && !isCurrentlyAttemptingClaim)
-                  Positioned(
-                    bottom: 5,
-                    left: 5,
-                    child: Icon(
-                      Icons.touch_app,
-                      color: Colors.blueAccent.withOpacity(0.9),
-                      size: baseFontSize * 1.5,
-                    ),
-                  ),
-
-                // Number
-                Positioned(
-                  bottom: cellHeight * 0.05,
-                  right: cellWidth * 0.05,
-                  child: Text(
-                    '${index + 1}',
-                    style: TextStyle(
-                      fontSize: baseFontSize * 0.9,
-                      fontWeight: FontWeight.bold,
-                      color: isClaimed ? Colors.white.withOpacity(0.7) : Colors.black,
-                    ),
-                  ),
-                ),
-              ],
+            // Using a Center widget to ensure itemContent is centered within the cell,
+            // especially important if itemContent itself doesn't fill the entire cell.
+            child: Center(
+              child: itemContent,
             ),
           ),
         );

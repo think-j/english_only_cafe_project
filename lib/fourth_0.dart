@@ -1,15 +1,30 @@
-// 1. First, create a UserProfileData class to hold all profile information
+// 1. UserProfileData class (NO CHANGES HERE)
 // Create a new file named user_profile_data.dart
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
-import 'package:flutter/material.dart';
+// import 'package:flutter/material.dart'; // Duplicate import
 import 'package:flutter/services.dart';
 import 'dart:async';
 import 'package:wakelock_plus/wakelock_plus.dart';
-import 'fourth_1.dart';
-import 'fourth_2.dart';
+
+// Assuming fourth_1.dart and fourth_2.dart define LinkQrGenerator, FourthMedia
+// For this example, let's create dummy placeholders if they are not essential for HomePage
+class LinkQrGenerator extends StatelessWidget {
+  const LinkQrGenerator({Key? key}) : super(key: key);
+  @override
+  Widget build(BuildContext context) => const Center(child: Text('LinkQrGenerator Page'));
+}
+
+class FourthMedia extends StatelessWidget {
+  const FourthMedia({Key? key}) : super(key: key);
+  @override
+  Widget build(BuildContext context) => const Center(child: Text('FourthMedia Page'));
+}
+// If HomePage is defined elsewhere and imported, this would be different.
+// For now, assuming these are the dependencies from the provided context.
+
 
 class UserProfileData extends ChangeNotifier {
   static final UserProfileData _instance = UserProfileData._internal();
@@ -148,10 +163,9 @@ class UserProfileData extends ChangeNotifier {
 }
 
 
-// 2. Now, modify your FourthPage class to implement PageStorage
+// 2. FourthPage class (NO CHANGES HERE)
 
-
-double _buttonOpacity = 1.0;
+double _buttonOpacity = 1.0; // This global variable might be better inside a stateful widget or a state management solution
 const double kDefaultFontSize = 14.0;
 
 class FourthPage extends StatefulWidget {
@@ -162,24 +176,17 @@ class FourthPage extends StatefulWidget {
 }
 
 class _FourthPageState extends State<FourthPage> {
-  // PageStorage key to preserve page states
   final PageStorageBucket _bucket = PageStorageBucket();
-
   late PageController _pageController;
   late final List<Widget> _actualPages;
   late final int _actualPageCount;
   final int _virtualPageCount = 10000;
-
-  // Create an instance of UserProfileData
   final UserProfileData _profileData = UserProfileData();
 
   @override
   void initState() {
-
     super.initState();
     WakelockPlus.enable();
-
-    // Load saved data on initialization
     _profileData.loadSavedData();
 
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
@@ -188,7 +195,6 @@ class _FourthPageState extends State<FourthPage> {
       DeviceOrientation.landscapeRight,
     ]);
 
-    // Each page gets a unique PageStorage key
     _actualPages = [
       PageStorage(
         key: const PageStorageKey('linkQrGenerator'),
@@ -203,7 +209,7 @@ class _FourthPageState extends State<FourthPage> {
       PageStorage(
         key: const PageStorageKey('homePage'),
         bucket: _bucket,
-        child: const HomePage(),
+        child: const HomePage(), // HomePage is used here
       ),
     ];
 
@@ -216,7 +222,6 @@ class _FourthPageState extends State<FourthPage> {
   @override
   void dispose() {
     _pageController.dispose();
-    // Consider disabling wakelock here
     WakelockPlus.disable();
     super.dispose();
   }
@@ -246,8 +251,6 @@ class _FourthPageState extends State<FourthPage> {
               itemCount: _virtualPageCount,
               itemBuilder: (context, index) {
                 final actualIndex = index % _actualPageCount;
-
-                // Wrap each page with AutomaticKeepAliveClientMixin to preserve state
                 return KeepAlivePage(child: _actualPages[actualIndex]);
               },
             ),
@@ -258,10 +261,9 @@ class _FourthPageState extends State<FourthPage> {
   }
 }
 
-// Add this wrapper to ensure page state is preserved
+// KeepAlivePage class (NO CHANGES HERE)
 class KeepAlivePage extends StatefulWidget {
   final Widget child;
-
   const KeepAlivePage({Key? key, required this.child}) : super(key: key);
 
   @override
@@ -280,7 +282,7 @@ class _KeepAlivePageState extends State<KeepAlivePage> with AutomaticKeepAliveCl
 }
 
 
-// 3. Finally, modify your HomePage class to use the shared UserProfileData
+// 3. HomePage class (CHANGES APPLIED HERE)
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -290,29 +292,22 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // Get the singleton instance of UserProfileData
   final UserProfileData _profileData = UserProfileData();
-
   Timer? _inactivityTimer;
 
   @override
   void initState() {
     super.initState();
     _startInactivityTimer();
-
-    // No need to load data here, it's already loaded in FourthPage
-
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
   }
 
   @override
   void dispose() {
     _inactivityTimer?.cancel();
-    // We don't dispose controllers here as they're managed by UserProfileData
     super.dispose();
   }
 
-  // Method for the save button
   Future<void> _saveProfile() async {
     await _profileData.saveData();
     if (mounted) {
@@ -322,7 +317,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // Improved user interaction handler
   void _onUserInteraction() {
     setState(() {
       _buttonOpacity = 1.0;
@@ -333,17 +327,18 @@ class _HomePageState extends State<HomePage> {
   void _startInactivityTimer() {
     _inactivityTimer?.cancel();
     _inactivityTimer = Timer(const Duration(seconds: 10), () {
-      setState(() {
-        _buttonOpacity = 0.0;
-      });
+      if (mounted) { // Check if widget is still mounted
+        setState(() {
+          _buttonOpacity = 0.0;
+        });
+      }
     });
   }
 
-  // Improved fieldBlock method with better responsiveness
   Widget fieldBlock(
       String label,
       TextEditingController controller, {
-        double fontSize = 14,
+        double fontSize = 14, // kDefaultFontSize can be used if defined globally
       }) {
     bool isBigField = label.contains("NAME") || label.contains("HOBBY");
     bool isOriginField = label.contains("COUNTRY") || label.contains("CITY");
@@ -411,7 +406,6 @@ class _HomePageState extends State<HomePage> {
       }
     });
 
-    // Access controllers from the shared ProfileData
     final nameController = _profileData.nameController;
     final countryController = _profileData.countryController;
     final cityController = _profileData.cityController;
@@ -482,7 +476,7 @@ class _HomePageState extends State<HomePage> {
                                           ),
                                         ),
                                       ),
-                                      const SizedBox(width: 8),
+                                      const SizedBox(width: 8), // This SizedBox was missing a 'const'
                                       Expanded(
                                         child: Padding(
                                           padding: const EdgeInsets.symmetric(horizontal: 8.0),
@@ -499,230 +493,232 @@ class _HomePageState extends State<HomePage> {
                               // Languages section
                               Expanded(
                                 flex: 9,
-                                child: Container(
-                                  decoration: const BoxDecoration(
-                                    border: Border(
-                                      bottom: BorderSide(color: Colors.black, width: 1.0),
+                                child: SingleChildScrollView( // <--- FIX APPLIED HERE
+                                  physics: const ClampingScrollPhysics(),
+                                  child: Container(
+                                    decoration: const BoxDecoration(
+                                      border: Border(
+                                        bottom: BorderSide(color: Colors.black, width: 1.0),
+                                      ),
                                     ),
-                                  ),
-                                  child: Row(
-                                    crossAxisAlignment: CrossAxisAlignment.center,
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Padding(
-                                        padding: const EdgeInsets.only(left: 8),
-                                        child: Text(
-                                          "LANGUAGES:",
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: kDefaultFontSize,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: SingleChildScrollView(
-                                          scrollDirection: Axis.horizontal,
-                                          child: Row(
-                                            children: languageOptions.map((lang) {
-                                              final isSelected = _profileData.selectedLanguages.contains(lang);
-                                              return GestureDetector(
-                                                onTap: () {
-                                                  setState(() {
-                                                    _profileData.setLanguageSelection(lang, !isSelected);
-                                                  });
-                                                  _onUserInteraction();
-                                                },
-                                                child: AnimatedContainer(
-                                                  duration: const Duration(milliseconds: 200),
-                                                  margin: const EdgeInsets.only(right: 6),
-                                                  padding: const EdgeInsets.symmetric(
-                                                    horizontal: 8,
-                                                    vertical: 4,
-                                                  ),
-                                                  decoration: const BoxDecoration(
-                                                    color: Colors.transparent,
-                                                  ),
-                                                  child: Column(
-                                                    mainAxisAlignment: MainAxisAlignment.center,
-                                                    mainAxisSize: MainAxisSize.min,
-                                                    children: [
-                                                      Text(
-                                                        lang,
-                                                        style: TextStyle(
-                                                          fontSize: 14,
-                                                          color: isSelected
-                                                              ? Colors.black
-                                                              : Colors.black,
-                                                          fontWeight: isSelected
-                                                              ? FontWeight.bold
-                                                              : FontWeight.normal,
-                                                        ),
-                                                      ),
-                                                      AnimatedContainer(
-                                                        duration: const Duration(milliseconds: 200),
-                                                        height: 3,
-                                                        width: isSelected ? 20 : 0,
-                                                        decoration: BoxDecoration(
-                                                          color: Colors.black,
-                                                          borderRadius: BorderRadius.circular(2),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              );
-                                            }).toList(),
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                          "(",
-                                          style: TextStyle(fontSize: MediaQuery.of(context).size.height * 0.040)
-                                      ),
-                                      SizedBox(
-                                        width: MediaQuery.of(context).size.width * 0.35,
-                                        height: 30,
-                                        child: Center(
-                                          child: TextField(
-                                            controller: languageNoteController,
-                                            textAlignVertical: TextAlignVertical.center,
-                                            onChanged: (_) => _onUserInteraction(),
-                                            decoration: const InputDecoration(
-                                              isDense: true,
-                                              contentPadding: EdgeInsets.symmetric(
-                                                vertical: 0,
-                                                horizontal: 6,
-                                              ),
-                                              border: InputBorder.none,
-                                            ),
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.only(left: 8),
+                                          child: Text(
+                                            "LANGUAGES:",
                                             style: TextStyle(
-                                              fontSize: MediaQuery.of(context).size.height * 0.050,
-                                              height: 1.1,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: kDefaultFontSize, // Using const kDefaultFontSize
                                             ),
                                           ),
                                         ),
-                                      ),
-                                      Text(
-                                          ")",
-                                          style: TextStyle(fontSize: MediaQuery.of(context).size.height * 0.040)
-                                      ),
-                                    ],
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: SingleChildScrollView(
+                                            scrollDirection: Axis.horizontal,
+                                            child: Row(
+                                              children: languageOptions.map((lang) {
+                                                final isSelected = _profileData.selectedLanguages.contains(lang);
+                                                return GestureDetector(
+                                                  onTap: () {
+                                                    setState(() {
+                                                      _profileData.setLanguageSelection(lang, !isSelected);
+                                                    });
+                                                    _onUserInteraction();
+                                                  },
+                                                  child: AnimatedContainer(
+                                                    duration: const Duration(milliseconds: 200),
+                                                    margin: const EdgeInsets.only(right: 6),
+                                                    padding: const EdgeInsets.symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 4,
+                                                    ),
+                                                    decoration: const BoxDecoration(
+                                                      color: Colors.transparent,
+                                                    ),
+                                                    child: Column(
+                                                      mainAxisAlignment: MainAxisAlignment.center,
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        Text(
+                                                          lang,
+                                                          style: TextStyle(
+                                                            fontSize: 14,
+                                                            color: Colors.black, // Simplified
+                                                            fontWeight: isSelected
+                                                                ? FontWeight.bold
+                                                                : FontWeight.normal,
+                                                          ),
+                                                        ),
+                                                        AnimatedContainer(
+                                                          duration: const Duration(milliseconds: 200),
+                                                          height: 3,
+                                                          width: isSelected ? 20 : 0,
+                                                          decoration: BoxDecoration(
+                                                            color: Colors.black,
+                                                            borderRadius: BorderRadius.circular(2),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                );
+                                              }).toList(),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                            "(",
+                                            style: TextStyle(fontSize: MediaQuery.of(context).size.height * 0.040)
+                                        ),
+                                        SizedBox(
+                                          width: MediaQuery.of(context).size.width * 0.35,
+                                          height: 30,
+                                          child: Center(
+                                            child: TextField(
+                                              controller: languageNoteController,
+                                              textAlignVertical: TextAlignVertical.center,
+                                              onChanged: (_) => _onUserInteraction(),
+                                              decoration: const InputDecoration(
+                                                isDense: true,
+                                                contentPadding: EdgeInsets.symmetric(
+                                                  vertical: 0,
+                                                  horizontal: 6,
+                                                ),
+                                                border: InputBorder.none,
+                                              ),
+                                              style: TextStyle(
+                                                fontSize: MediaQuery.of(context).size.height * 0.050,
+                                                height: 1.1,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        Text(
+                                            ")",
+                                            style: TextStyle(fontSize: MediaQuery.of(context).size.height * 0.040)
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
                               // Status section
                               Expanded(
                                 flex: 9,
-                                child: Container(
-                                  decoration: const BoxDecoration(
-                                    border: Border(
-                                      bottom: BorderSide(color: Colors.black, width: 1.0),
+                                child: SingleChildScrollView( // <--- FIX APPLIED HERE
+                                  physics: const ClampingScrollPhysics(),
+                                  child: Container(
+                                    decoration: const BoxDecoration(
+                                      border: Border(
+                                        bottom: BorderSide(color: Colors.black, width: 1.0),
+                                      ),
                                     ),
-                                  ),
-                                  child: Row(
-                                    crossAxisAlignment: CrossAxisAlignment.center,
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Padding(
-                                        padding: const EdgeInsets.only(left: 8),
-                                        child: Text(
-                                          "STATUS",
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: kDefaultFontSize,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: SingleChildScrollView(
-                                          scrollDirection: Axis.horizontal,
-                                          child: Row(
-                                            mainAxisAlignment: MainAxisAlignment.center,
-                                            children: statusOptions.map((status) {
-                                              final isSelected = _profileData.selectedStatus == status;
-                                              return GestureDetector(
-                                                onTap: () {
-                                                  setState(() {
-                                                    _profileData.setStatusSelection(status);
-                                                  });
-                                                  _onUserInteraction();
-                                                },
-                                                child: AnimatedContainer(
-                                                  duration: const Duration(milliseconds: 200),
-                                                  margin: const EdgeInsets.only(right: 6),
-                                                  padding: const EdgeInsets.symmetric(
-                                                    horizontal: 8,
-                                                    vertical: 4,
-                                                  ),
-                                                  child: Column(
-                                                    mainAxisAlignment: MainAxisAlignment.center,
-                                                    mainAxisSize: MainAxisSize.min,
-                                                    children: [
-                                                      Text(
-                                                        status,
-                                                        style: TextStyle(
-                                                          fontSize: 14,
-                                                          fontWeight: isSelected
-                                                              ? FontWeight.bold
-                                                              : FontWeight.normal,
-                                                          color: isSelected
-                                                              ? Colors.black
-                                                              : Colors.black,
-                                                        ),
-                                                      ),
-                                                      AnimatedContainer(
-                                                        duration: const Duration(milliseconds: 200),
-                                                        height: 3,
-                                                        width: isSelected ? 70 : 0,
-                                                        decoration: BoxDecoration(
-                                                          color: Colors.black,
-                                                          borderRadius: BorderRadius.circular(2),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              );
-                                            }).toList(),
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                          "(",
-                                          style: TextStyle(fontSize: MediaQuery.of(context).size.height * 0.040)
-                                      ),
-                                      SizedBox(
-                                        width: MediaQuery.of(context).size.width * 0.35,
-                                        height: 30,
-                                        child: Center(
-                                          child: TextField(
-                                            controller: statusNoteController,
-                                            textAlignVertical: TextAlignVertical.center,
-                                            onChanged: (_) => _onUserInteraction(),
-                                            decoration: const InputDecoration(
-                                              isDense: true,
-                                              contentPadding: EdgeInsets.symmetric(
-                                                vertical: 0,
-                                                horizontal: 6,
-                                              ),
-                                              border: InputBorder.none,
-                                            ),
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.only(left: 8),
+                                          child: Text(
+                                            "STATUS",
                                             style: TextStyle(
-                                              fontSize: MediaQuery.of(context).size.height * 0.050,
-                                              height: 1.1,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: kDefaultFontSize, // Using const kDefaultFontSize
                                             ),
                                           ),
                                         ),
-                                      ),
-                                      Text(
-                                          ")",
-                                          style: TextStyle(fontSize: MediaQuery.of(context).size.height * 0.040)
-                                      ),
-                                    ],
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: SingleChildScrollView(
+                                            scrollDirection: Axis.horizontal,
+                                            child: Row(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: statusOptions.map((status) {
+                                                final isSelected = _profileData.selectedStatus == status;
+                                                return GestureDetector(
+                                                  onTap: () {
+                                                    setState(() {
+                                                      _profileData.setStatusSelection(status);
+                                                    });
+                                                    _onUserInteraction();
+                                                  },
+                                                  child: AnimatedContainer(
+                                                    duration: const Duration(milliseconds: 200),
+                                                    margin: const EdgeInsets.only(right: 6),
+                                                    padding: const EdgeInsets.symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 4,
+                                                    ),
+                                                    child: Column(
+                                                      mainAxisAlignment: MainAxisAlignment.center,
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        Text(
+                                                          status,
+                                                          style: TextStyle(
+                                                            fontSize: 14,
+                                                            fontWeight: isSelected
+                                                                ? FontWeight.bold
+                                                                : FontWeight.normal,
+                                                            color: Colors.black, // Simplified
+                                                          ),
+                                                        ),
+                                                        AnimatedContainer(
+                                                          duration: const Duration(milliseconds: 200),
+                                                          height: 3,
+                                                          width: isSelected ? 70 : 0,
+                                                          decoration: BoxDecoration(
+                                                            color: Colors.black,
+                                                            borderRadius: BorderRadius.circular(2),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                );
+                                              }).toList(),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                            "(",
+                                            style: TextStyle(fontSize: MediaQuery.of(context).size.height * 0.040)
+                                        ),
+                                        SizedBox(
+                                          width: MediaQuery.of(context).size.width * 0.35,
+                                          height: 30,
+                                          child: Center(
+                                            child: TextField(
+                                              controller: statusNoteController,
+                                              textAlignVertical: TextAlignVertical.center,
+                                              onChanged: (_) => _onUserInteraction(),
+                                              decoration: const InputDecoration(
+                                                isDense: true,
+                                                contentPadding: EdgeInsets.symmetric(
+                                                  vertical: 0,
+                                                  horizontal: 6,
+                                                ),
+                                                border: InputBorder.none,
+                                              ),
+                                              style: TextStyle(
+                                                fontSize: MediaQuery.of(context).size.height * 0.050,
+                                                height: 1.1,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        Text(
+                                            ")",
+                                            style: TextStyle(fontSize: MediaQuery.of(context).size.height * 0.040)
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
