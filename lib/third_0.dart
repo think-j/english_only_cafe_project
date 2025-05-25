@@ -300,15 +300,7 @@ class _ThirdPageState extends State<ThirdPage> with AutomaticKeepAliveClientMixi
 
   // Utility methods
   void _showSnackBar(String message, Color color) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: color,
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    }
+
   }
 
   @override
@@ -366,8 +358,8 @@ class _ThirdPageState extends State<ThirdPage> with AutomaticKeepAliveClientMixi
                   },
                 ),
               ),
-              Column(
-                children: [
+
+
                   _buildNfcButton(
                     buttonText: buttonText,
                     width: responsiveButtonWidth,
@@ -375,16 +367,9 @@ class _ThirdPageState extends State<ThirdPage> with AutomaticKeepAliveClientMixi
                     onPressed: _onSingleNfcButtonPressed,
                     onLongPress: _startQrCodeScan,
                   ),
-                  SizedBox(height: responsiveButtonWidth * 0.15),
-                  _buildNfcButton(
-                    buttonText: buttonText,
-                    width: responsiveButtonWidth,
-                    height: responsiveButtonHeight,
-                    onPressed: _onSingleNfcButtonPressed,
-                    onLongPress: null,
-                  ),
-                ],
-              ),
+
+
+
             ],
           ),
         ),
@@ -403,12 +388,18 @@ class _ThirdPageState extends State<ThirdPage> with AutomaticKeepAliveClientMixi
       width: width,
       height: height,
       child: ElevatedButton(
+
         onPressed: onPressed,
         onLongPress: onLongPress,
         style: ElevatedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+          backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(width * 0.3),
+            borderRadius: BorderRadius.circular(5),
+            side: const BorderSide(         // Added this line
+              color: Colors.grey,        // Choose your border color
+              width: 0.5,                 // Choose your border width
+            ),
           ),
         ),
         child: Column(
@@ -417,12 +408,15 @@ class _ThirdPageState extends State<ThirdPage> with AutomaticKeepAliveClientMixi
             Icon(
               Icons.nfc,
               size: width * 0.8,
+              color: Colors.grey,
             ),
             SizedBox(height: width * 0.15),
             Text(
               buttonText,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: width * 0.18),
+              style: TextStyle(fontSize: width * 0.18, color: Colors.grey),
+
+
             ),
           ],
         ),
@@ -472,7 +466,7 @@ class _ThirdPageState extends State<ThirdPage> with AutomaticKeepAliveClientMixi
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               TweenAnimationBuilder<double>(
-                tween: Tween<double>(begin: 2.0, end: 3.0), // Magnify icon (e.g., to 160%)
+                tween: Tween<double>(begin: 2.0, end: 2.3), // Magnify icon (e.g., to 160%)
                 duration: _rewardClaimHoldDuration,
                 builder: (BuildContext context, double scale, Widget? iconToScale) {
                   return Transform.scale(
@@ -556,11 +550,10 @@ class _ThirdPageState extends State<ThirdPage> with AutomaticKeepAliveClientMixi
                 ),
               ),
               Positioned(
-                top: cellHeight * 0.05,
-                right: cellWidth * 0.05,
+
                 child: Text(
                   'REWARD\nREADY!',
-                  textAlign: TextAlign.right,
+                  textAlign: TextAlign.center,
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: baseFontSize * 0.95,
@@ -630,18 +623,16 @@ class _ThirdPageState extends State<ThirdPage> with AutomaticKeepAliveClientMixi
           );
         }
 
-        return GestureDetector(
+        return GestureDetector( // <--- Handles touch logic
           onTapDown: canBeClaimed ? (_) => _startRewardClaimAttempt(index) : null,
           onTapUp: canBeClaimed ? (_) => _cancelRewardClaimAttempt(index) : null,
           onTapCancel: canBeClaimed ? () => _cancelRewardClaimAttempt(index) : null,
-          child: Container(
+          child: Container( // <--- The visual part
             decoration: BoxDecoration(
               border: Border.all(color: Colors.black, width: 0.5),
               color: _getGridItemColor(isClaimed, isCurrentlyAttemptingClaim,
                   canBeClaimed, isGeneralRewardSpot),
             ),
-            // Using a Center widget to ensure itemContent is centered within the cell,
-            // especially important if itemContent itself doesn't fill the entire cell.
             child: Center(
               child: itemContent,
             ),
@@ -654,8 +645,8 @@ class _ThirdPageState extends State<ThirdPage> with AutomaticKeepAliveClientMixi
   Color _getGridItemColor(bool isClaimed, bool isCurrentlyAttemptingClaim,
       bool canBeClaimed, bool isGeneralRewardSpot) {
     if (isClaimed) return Colors.blueGrey[300]!;
-    if (isCurrentlyAttemptingClaim) return Colors.yellow[400]!;
-    if (canBeClaimed) return Colors.amber[300]!;
+    if (isCurrentlyAttemptingClaim) return Colors.white38;
+    if (canBeClaimed) return Colors.white38;
     if (isGeneralRewardSpot) return Colors.grey[300]!;
     return Colors.white;
   }
