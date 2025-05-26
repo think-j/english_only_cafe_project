@@ -8,22 +8,8 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'dart:async';
 import 'package:wakelock_plus/wakelock_plus.dart';
-
-// Assuming fourth_1.dart and fourth_2.dart define LinkQrGenerator, FourthMedia
-// For this example, let's create dummy placeholders if they are not essential for HomePage
-class LinkQrGenerator extends StatelessWidget {
-  const LinkQrGenerator({Key? key}) : super(key: key);
-  @override
-  Widget build(BuildContext context) => const Center(child: Text('LinkQrGenerator Page'));
-}
-
-class FourthMedia extends StatelessWidget {
-  const FourthMedia({Key? key}) : super(key: key);
-  @override
-  Widget build(BuildContext context) => const Center(child: Text('FourthMedia Page'));
-}
-// If HomePage is defined elsewhere and imported, this would be different.
-// For now, assuming these are the dependencies from the provided context.
+import 'fourth_1.dart';
+import 'fourth_2.dart';
 
 
 class UserProfileData extends ChangeNotifier {
@@ -199,17 +185,17 @@ class _FourthPageState extends State<FourthPage> {
       PageStorage(
         key: const PageStorageKey('linkQrGenerator'),
         bucket: _bucket,
-        child: const LinkQrGenerator(),
+        child:  LinkQrGenerator(),
       ),
       PageStorage(
         key: const PageStorageKey('fourthMedia'),
         bucket: _bucket,
-        child: const FourthMedia(),
+        child:  FourthMedia(),
       ),
       PageStorage(
         key: const PageStorageKey('homePage'),
         bucket: _bucket,
-        child: const HomePage(), // HomePage is used here
+        child: const HomePage(),
       ),
     ];
 

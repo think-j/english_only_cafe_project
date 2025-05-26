@@ -29,7 +29,6 @@ class _FirstPageState extends State<FirstPage> {
     // We're rotating the content 90 degrees
     return SafeArea(
       child: Scaffold(
-        resizeToAvoidBottomInset: false,
         backgroundColor: Colors.white,
         body: Center(
           child: RotatedBox(
