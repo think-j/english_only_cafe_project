@@ -4,7 +4,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
-// import 'package:flutter/material.dart'; // Duplicate import
 import 'package:flutter/services.dart';
 import 'dart:async';
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -162,12 +161,14 @@ class FourthPage extends StatefulWidget {
 }
 
 class _FourthPageState extends State<FourthPage> {
+
   final PageStorageBucket _bucket = PageStorageBucket();
   late PageController _pageController;
   late final List<Widget> _actualPages;
   late final int _actualPageCount;
   final int _virtualPageCount = 10000;
   final UserProfileData _profileData = UserProfileData();
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -181,18 +182,16 @@ class _FourthPageState extends State<FourthPage> {
       DeviceOrientation.landscapeRight,
     ]);
 
+    // In _FourthPageState, initState or where _actualPages is defined:
     _actualPages = [
-      PageStorage(
+      PageStorage( // Index 0: LinkQrGenerator
         key: const PageStorageKey('linkQrGenerator'),
-        bucket: _bucket,
-        child:  LinkQrGenerator(),
+        bucket: _bucket, // Make sure _bucket is initialized: final PageStorageBucket _bucket = PageStorageBucket();
+        child: LinkQrGenerator(), // Assuming LinkQrGenerator is defined
       ),
-      PageStorage(
-        key: const PageStorageKey('fourthMedia'),
-        bucket: _bucket,
-        child:  FourthMedia(),
-      ),
-      PageStorage(
+      // FourthMedia (index 1) WITHOUT PageStorage wrapper
+      const FourthMedia(), // Or FourthMedia() if its constructor isn't const
+      PageStorage( // Index 2: HomePage
         key: const PageStorageKey('homePage'),
         bucket: _bucket,
         child: const HomePage(),
@@ -235,9 +234,19 @@ class _FourthPageState extends State<FourthPage> {
               scrollDirection: Axis.horizontal,
               physics: const BouncingScrollPhysics(),
               itemCount: _virtualPageCount,
+              // In _FourthPageState, build method, PageView.builder:
               itemBuilder: (context, index) {
-                final actualIndex = index % _actualPageCount;
-                return KeepAlivePage(child: _actualPages[actualIndex]);
+                final actualIndex = index % _actualPageCount; // _actualPageCount here is for FourthPage's internal pages
+                final Widget currentPage = _actualPages[actualIndex];
+
+                if (actualIndex == 1) { // Index 1 is FourthMedia
+                  print("FourthPage: Building FourthMedia (index $actualIndex) - NOT kept alive.");
+                  return currentPage;
+                } else {
+                  // Other pages within FourthPage (LinkQrGenerator, HomePage)
+                  print("FourthPage: Building page index $actualIndex - Kept alive.");
+                  return KeepAlivePage(child: currentPage);
+                }
               },
             ),
           ),

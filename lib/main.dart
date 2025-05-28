@@ -60,9 +60,7 @@ class _OrderedPageViewState extends State<OrderedPageView> {
         scrollDirection: Axis.vertical,
         itemCount: _virtualPageCount,
         itemBuilder: (context, index) {
-          // Map the virtual index to actual pages (0,1,2,3)
           final actualIndex = index % _actualPageCount;
-
           switch (actualIndex) {
             case 0:
               return const FirstPage();

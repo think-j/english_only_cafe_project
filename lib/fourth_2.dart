@@ -241,24 +241,6 @@ class _FourthMediaState extends State<FourthMedia> {
               ),
             ),
 
-            // Edit Mode Toggle Button
-            const SizedBox(height: 20),
-            Center(
-              child: ElevatedButton.icon(
-                  icon: Icon(isEditMode ? Icons.check_rounded : Icons.edit),
-                  label: Text(isEditMode ? "Done Editing" : "Edit Albums"),
-                  onPressed: () {
-                    setState(() {
-                      isEditMode = !isEditMode;
-                    });
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: isEditMode ? Colors.green : null,
-                    foregroundColor: isEditMode ? Colors.white : null,
-                  )
-              ),
-            ),
-            const Spacer(),
           ],
         ),
       ),
@@ -484,6 +466,8 @@ class _FourthMediaState extends State<FourthMedia> {
   }
 
   // Pick images for a new album
+  // In _FourthMediaState
+
   void _pickImagesForNewAlbum(String albumName) async {
     try {
       final List<XFile> pickedFiles = await _picker.pickMultiImage(imageQuality: 85);
@@ -505,25 +489,24 @@ class _FourthMediaState extends State<FourthMedia> {
           subPhotoPaths.add(savedPath);
         }
       }
-      _dataManager.addPhotoItem( // Use the new method from PhotoDataManager
-        PhotoItem(
-          filePath: mainPhotoPath,
-          subPhotos: subPhotoPaths.isEmpty ? null : subPhotoPaths,
-          albumName: albumName,
-        ),
+
+      // Create the PhotoItem
+      final newAlbum = PhotoItem(
+        filePath: mainPhotoPath,
+        subPhotos: subPhotoPaths.isEmpty ? null : subPhotoPaths,
+        albumName: albumName,
       );
-      setState(() {
-        // To refresh the UI with the new item
-      });
-      setState(() {
-        photoItems.add(
-          PhotoItem(
-            filePath: mainPhotoPath,
-            subPhotos: subPhotoPaths.isEmpty ? null : subPhotoPaths,
-            albumName: albumName,
-          ),
-        );
-      });
+
+      // Add the item ONLY through the PhotoDataManager
+      _dataManager.addPhotoItem(newAlbum);
+
+      // Call setState to refresh the UI.
+      // The UI will now read the updated list from _dataManager.
+      if (mounted) { // Good practice to check mounted before setState
+        setState(() {
+          // No need to add to photoItems here, it's already updated via _dataManager
+        });
+      }
 
       _showErrorSnackbar('Album created with ${pickedFiles.length} photos');
     } catch (e) {
