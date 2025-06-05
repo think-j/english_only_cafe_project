@@ -6,6 +6,8 @@
 <array>
   <string>instagram</string>
 </array>
+<key>NFCReaderUsageDescription</key>
+<string>This app uses NFC to scan loyalty card stamps and interact with staff devices.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

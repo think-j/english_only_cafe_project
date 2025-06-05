@@ -45,7 +45,6 @@ dependencies:
   video_compress: ^3.1.4   # Or latest version
   flip_card: ^0.7.0
   mobile_scanner: ^7.0.0
-
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
