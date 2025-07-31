@@ -19,7 +19,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+4
 
 environment:
-  sdk: ^3.7.2
+  sdk: '>=3.0.0 <4.0.0'
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -33,7 +33,7 @@ dependencies:
   flutter:
     sdk: flutter
   url_launcher: ^6.1.14
-  wakelock_plus: ^1.1.4  # Use the latest version
+  wakelock_plus: ^1.1.2  # Use the latest version
   shared_preferences: ^2.1.1
   qr_flutter: ^4.1.0
   nfc_manager: ^3.5.0
@@ -60,6 +60,7 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
   flutter_launcher_icons: ^0.13.1
+  build_runner: ^2.4.13
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
