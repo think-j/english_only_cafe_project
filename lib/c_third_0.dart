@@ -390,79 +390,10 @@ class _ThirdPageState extends State<ThirdPage> with AutomaticKeepAliveClientMixi
     }
   }
 
-  String _parseNdefTextPayload(NdefRecord record) {
-    try {
-      if (record.typeNameFormat == NdefTypeNameFormat.nfcWellknown &&
-          String.fromCharCodes(record.type) == 'T') {
-        int langCodeLength = record.payload.first & 0x3F;
-        return String.fromCharCodes(record.payload.sublist(1 + langCodeLength));
-      }
-      return String.fromCharCodes(record.payload);
-    } catch (e) {
-      print("Error parsing NDEF text payload: $e");
-      return "";
-    }
-  }
 
-  Future<void> _handleCustomerNfcDiscovery(NfcTag tag) async {
-    try {
-      print("NFC Tag discovered");
-      Ndef? ndef = Ndef.from(tag);
-      if (ndef == null) {
-        await _safeStopNfcSession();
-        _showSnackBar('Tag is not NDEF formatted.', Colors.red);
-        return;
-      }
-      NdefMessage? message = await ndef.read();
-      if (message == null || message.records.isEmpty) {
-        await _safeStopNfcSession();
-        _showSnackBar('No message found on tag.', Colors.red);
-        return;
-      }
-      String actualTextPayload = _parseNdefTextPayload(message.records.first);
-      print("Discovered Tag Payload: $actualTextPayload");
-      await _safeStopNfcSession();
 
-      if (isStaffMode) {
-        if (actualTextPayload == staffActivationPayload) {
-          _showSnackBar('Staff Mode already active.', Colors.blue);
-        } else {
-          _showSnackBar('In Staff Mode. Scan ignored: $actualTextPayload', Colors.orange);
-        }
-        return;
-      }
 
-      if (actualTextPayload == staffActivationPayload) {
-        if (mounted) {
-          setState(() { isStaffMode = true; });
-          _saveAppState();
-          _showSnackBar('Staff Mode Activated!', Colors.green);
-        }
-      } else if (scannedValueToStampType.containsKey(actualTextPayload)) {
-        final stampType = scannedValueToStampType[actualTextPayload]!;
-        _addStampToCard(stampType, "scanned NFC tag");
-      } else if (actualTextPayload.contains(stampIssuancePayloadKey) &&
-          actualTextPayload.startsWith(stampTypePrefix)) {
-        String? receivedStampType;
-        final parts = actualTextPayload.split(';');
-        final typePart = parts.firstWhere((part) => part.startsWith(stampTypePrefix), orElse: () => "");
-        if (typePart.isNotEmpty) {
-          receivedStampType = typePart.substring(stampTypePrefix.length);
-        }
-        if (receivedStampType != null) {
-          _addStampToCard(receivedStampType, "staff-issued NFC");
-        } else {
-          _showSnackBar('Invalid staff-issued stamp data.', Colors.red);
-        }
-      } else {
-        _showSnackBar('Unknown NFC tag content: $actualTextPayload', Colors.red);
-      }
-    } catch (e) {
-      print("Error in _handleCustomerNfcDiscovery: $e");
-      await _safeStopNfcSession();
-      _showSnackBar('Error processing NFC tag: ${e.toString()}', Colors.red);
-    }
-  }
+
 
   Future<void> _safeStopNfcSession() async {
     try {
@@ -492,34 +423,11 @@ class _ThirdPageState extends State<ThirdPage> with AutomaticKeepAliveClientMixi
     if (isStaffMode) {
       _issueStamp();
     } else {
-      _startCustomerNfcSession();
+
     }
   }
 
-  void _startCustomerNfcSession() {
-    _showSnackBar('Ready: Tap NFC Tag or long-press for QR.', Colors.blue);
-    if (mounted) {
-      setState(() { isNfcSessionActive = true; });
-    }
-    NfcManager.instance.startSession(
-      onDiscovered: _handleCustomerNfcDiscovery,
-      onError: (NfcError error) async {
-        print("NFC Error: ${error.message}");
-        await _safeStopNfcSession();
-        _showSnackBar('NFC Error: ${error.message}', Colors.red);
-      },
-    ).catchError((e) {
-      print("Error starting NFC session: $e");
-      _safeStopNfcSession(); // Ensure session flag is reset
-      _showSnackBar('Error starting NFC session: ${e.toString()}', Colors.red);
-    });
-    Timer(const Duration(seconds: 30), () {
-      if (isNfcSessionActive) {
-        _safeStopNfcSession();
-        _showSnackBar('NFC session timed out.', Colors.orange);
-      }
-    });
-  }
+
 
   void _issueStamp() { /* ... same as your existing code ... */ }
   Future<void> _promptForStampTypeAndIssue() async { /* ... same as your existing code ... */ }
