@@ -79,7 +79,7 @@ class _FirstPageState extends State<FirstPage> {
                       textAlign: TextAlign.center,
                       text: TextSpan(
                         style: TextStyle(
-                          fontFamily: 'SF Pro Display',
+                          fontFamily: 'SF Pro Displayt',
                           fontSize: cafeFontSize * 0.6,
                           letterSpacing: cafeFontSize * 0.15,
                           color: Colors.black87,
